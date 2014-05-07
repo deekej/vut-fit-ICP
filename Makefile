@@ -1,3 +1,4 @@
+############################################################
 # MAKEFILE for ICP course, 2014
 ############################################################
 #	Author:		David Kaspar (aka Dee'Kej), 3BIT
@@ -8,22 +9,12 @@
 # Date:			23-04-2014
 ############################################################
 
-# Compiler.
-CC=g++
-
-# Parameters of compilation.
-CFLAGS=-std=c++11 -pedantic -W -Wall -Wextra -O3
-
+############################################################
 # Default rule for creating all required files:
-all: server client-cli client-qt
-
 ############################################################
 
-server:
-	
-client-cli:
-
-client-qt:
+all:
+	@$(MAKE) -C src/server
 
 ############################################################
 # Other useful stuff:
@@ -40,6 +31,7 @@ pack:
 
 # Remove object files generated during compiling.
 clean:
-	rm -f *.o
+	@cd server && $(MAKE) clean
 
 clean-all:
+	@cd server && $(MAKE) clean-all

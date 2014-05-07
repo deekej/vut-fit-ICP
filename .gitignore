@@ -1,1 +1,6 @@
 old/
+src/server/mazed
+src/server/client
+src/server/client.cc
+boost/
+serial/
