@@ -1,17 +1,18 @@
 /**
  * @file      main.cc
  * @author    Dee'Kej (David Kaspar - xkaspa34)
- * @version   0.1
+ * @version   1.0
  * @brief     Server daemon of Maze-game for ICP course @ BUT FIT, 2014.
  *
- * @detailed  TODO
- *
- * @note      TODO
+ * @detailed  This is a main program for running the server daemon of the game. It can be launched with several options
+ *            which allows modifying the server's behaviour. See the help of the program for more info.
  */
+
 
 /* ****************************************************************************************************************** *
  ~ ~~~[ HEADER FILES ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
  * ****************************************************************************************************************** */
+
 // C++ header files:
 #include <iterator>
 #include <string>
@@ -29,7 +30,12 @@
 #include "mazed_globals.hh"
 #include "mazed_server.hh"
 
-const std::string HELP_STRING =
+
+/* ****************************************************************************************************************** *
+ ~ ~~~[ GLOBAL VARIABLES ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
+ * ****************************************************************************************************************** */
+
+ronst std::string HELP_STRING =
 "This is the server daemon for MAZE-GAME application,\n"
 "which is the part from project of ICP course @ BUT FIT, Czech Republic, 2014.\n\n"
 "Version:       0.1\n"
@@ -37,16 +43,25 @@ const std::string HELP_STRING =
 "Website:       https://bitbucket.org/deekej\n\n"
 "Optional arguments";
 
-mazed::settings_tuple SETTINGS;
+mazed::settings_tuple SETTINGS;                             // Stores the server settings for other processes.
 
-int LOG_FILE_FD {-1};
-std::string DAEMON_LOG_FILE {"daemon.log"};
-mazed::log_level LOGGING_LEVEL {mazed::log_level::NONE};
+int LOG_FILE_FD {-1};                                       // Log file descriptor backup for closing at exit.
+std::string DAEMON_LOG_FILE {"daemon.log"};                 // Name for starting log file of this process.
+mazed::log_level LOGGING_LEVEL {mazed::log_level::NONE};    // Auxiliary variable for logging.
 
-// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
 
+/* ****************************************************************************************************************** *
+ ~ ~~~[ AUXILIARY FUNCTIONS ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
+ * ****************************************************************************************************************** */
+
+/**
+ *  Process the server daemon command line arguments and stores them to SETTINGS global variable.
+ *
+ *  @param[in] argc Number of command line arguments.
+ *  @param[in] argv Array of the arguments.
+ */
 void process_params(int argc, char *argv[])
-{
+{{{
   std::string process_name {argv[0]};
 
   unsigned char logging;
@@ -136,15 +151,27 @@ void process_params(int argc, char *argv[])
     std::cerr << process_name << ": Error: Exception of unknown type during arguments processing!" << std::endl;
     exit(mazed::exit_codes::E_UNKNOWN_EXCEPT);
   }
-}
+}}}
 
+
+/**
+ *  Cleaning function registered to be called at exit for closing the log file.
+ */
 void close_log()
-{
+{{{
   close(LOG_FILE_FD);
-}
+  return;
+}}}
 
+
+/**
+ *  Signal handler function which sends SIGTERM to all child processes to make sure we don't leave any zombies.
+ *
+ *  @param[in] error Reference to Boost's error indication.
+ *  @param[in] signal_number The actual signal received - SIGINT or SIGTERM.
+ */
 void terminate_children(const boost::system::error_code &error, int signal_number)
-{
+{{{
   if (error == false && (signal_number == SIGINT || signal_number == SIGTERM)) {
     syslog(LOG_INFO | LOG_USER, "terminating all child processes");
     pid_t process_group = getpgrp();
@@ -153,64 +180,42 @@ void terminate_children(const boost::system::error_code &error, int signal_numbe
   else {
     syslog(LOG_ERR | LOG_USER, "Error: %s", error.message().c_str());
   }
-}
+}}}
+
 
 /* ****************************************************************************************************************** *
  ~ ~~~[ MAIN FUNCTION ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
  * ****************************************************************************************************************** */
-int main(int argc, char *argv[])
-{
-  // std::ios::sync_with_stdio(false);
 
+int main(int argc, char *argv[])
+{{{
   process_params(argc, argv);
 
-  // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
+  // // // // // // // // //
 
   try {
     boost::asio::io_service io_service;
 
-    // Initialise the server before becoming a daemon. If the process is
-    // started from a shell, this means any errors will be reported back to the
-    // user.
+    // Initializing the server before becoming a daemon. If the process is started from shell, all initial errors will
+    // be reported to the user.
     mazed::server server(io_service, SETTINGS);
 
-    // Register signal handlers so that the daemon may be shut down. You may
-    // also want to register for other signals, such as SIGHUP to trigger a
-    // re-read of a configuration file.
+    // Registering handlers for signals:
     boost::asio::signal_set io_service_stop(io_service, SIGINT, SIGTERM);
     io_service_stop.async_wait(boost::bind(&boost::asio::io_service::stop, &io_service));
 
     boost::asio::signal_set children_kill(io_service, SIGINT, SIGTERM);
     children_kill.async_wait(terminate_children);
 
-    // Inform the io_service that we are about to become a daemon. The
-    // io_service cleans up any internal resources, such as threads, that may
-    // interfere with forking.
+    // Making safe fork by informing io_service about upcoming fork:
     io_service.notify_fork(boost::asio::io_service::fork_prepare);
 
-    // Fork the process and have the parent exit. If the process was started
-    // from a shell, this returns control to the user. Forking a new process is
-    // also a prerequisite for the subsequent call to setsid().
+    // Forking and exit the parent. This returns control to the user if the daemon was started from shell.
     if (pid_t pid = fork())
     {
       if (pid > 0)
       {
-        // We're in the parent process and need to exit.
-        //
-        // When the exit() function is used, the program terminates without
-        // invoking local variables' destructors. Only global variables are
-        // destroyed. As the io_service object is a local variable, this means
-        // we do not have to call:
-        //
-        //   io_service.notify_fork(boost::asio::io_service::fork_parent);
-        //
-        // However, this line should be added before each call to exit() if
-        // using a global io_service object. An additional call:
-        //
-        //   io_service.notify_fork(boost::asio::io_service::fork_prepare);
-        //
-        // should also precede the second fork().
-        return mazed::exit_codes::NO_ERROR;
+        return mazed::exit_codes::NO_ERROR;         // We're in the parent process -> exiting.
       }
       else
       {
@@ -219,24 +224,11 @@ int main(int argc, char *argv[])
       }
     }
 
+    setsid();     // Make the process a new session leader, this detaches it from the terminal.
+    chdir("/");   // Make sure we don't block any mounted filesystem from unmounting.
+    umask(0);     // Clearing the files permissions mask for upcoming files creating so there's no restriction.
 
-
-    // Make the process a new session leader. This detaches it from the
-    // terminal.
-    setsid();
-
-    // A process inherits its working directory from its parent. This could be
-    // on a mounted filesystem, which means that the running daemon would
-    // prevent this filesystem from being unmounted. Changing to the root
-    // directory avoids this problem.
-    chdir("/");
-
-    // The file mode creation mask is also inherited from the parent process.
-    // We don't want to restrict the permissions on files created by the
-    // daemon, so the mask is cleared.
-    umask(0);
-
-    // A second fork ensures the process cannot acquire a controlling terminal.
+    // Make sure the server doesn't acquire a controlling terminal.
     if (pid_t pid = fork())
     {
       if (pid > 0)
@@ -250,13 +242,12 @@ int main(int argc, char *argv[])
       }
     }
 
-    // Close the standard streams. This decouples the daemon from the terminal
-    // that started it.
+    // Closing standard streams. This is final step for decoupling from the starting terminal.
     close(0);
     close(1);
     close(2);
 
-    // We don't want the daemon to have any standard input.
+    // Disabling standard input. (Blocking file/pipe input, etc.)
     if (open("/dev/null", O_RDONLY) < 0)
     {
       syslog(LOG_ERR | LOG_USER, "Unable to open /dev/null: %s", strerror(errno));
@@ -265,6 +256,7 @@ int main(int argc, char *argv[])
 
     // Create the log directory for the daemon and client handlers, if it doesn't exists yet:
     boost::filesystem::path log_dir(std::get<mazed::LOG_FOLDER>(SETTINGS));
+
     if (boost::filesystem::exists(log_dir) || boost::filesystem::create_directory(log_dir)) {
       DAEMON_LOG_FILE.insert(0, "/");
       DAEMON_LOG_FILE.insert(0, std::get<mazed::LOG_FOLDER>(SETTINGS));
@@ -274,7 +266,8 @@ int main(int argc, char *argv[])
       return mazed::exit_codes::E_FOLDER_CREATE;
     }
 
-    // Send standard output to a log file.
+    // Sending the standard output of the daemon to the file:
+    // NOTE: The server itself has it's own log file.
     const int flags = O_WRONLY | O_CREAT | O_APPEND;
     const mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
 
@@ -287,28 +280,30 @@ int main(int argc, char *argv[])
       std::atexit(close_log);
     }
 
-
-    // Also send standard error to the same log file.
+    // Sending the standard error stream to the same file:
     if (dup(1) < 0)
     {
       syslog(LOG_ERR | LOG_USER, "Unable to dupplicate the output descriptor: %s", strerror(errno));
       return mazed::exit_codes::E_OPEN;
     }
 
-    // Inform the io_service that we have finished becoming a daemon. The
-    // io_service uses this opportunity to create any internal file descriptors
-    // that need to be private to the new process.
+    // Informing the io_service that the process has become a proper daemon process:
     io_service.notify_fork(boost::asio::io_service::fork_child);
 
-    std::get<mazed::LOGGING_LEVEL>(SETTINGS) = LOGGING_LEVEL;     // Starting logging if requested.
+    std::get<mazed::LOGGING_LEVEL>(SETTINGS) = LOGGING_LEVEL;     // Starting the logging if requested.
 
-    // The io_service can now be used normally.
-    syslog(LOG_INFO | LOG_USER, "server daemon started");
-    server.run();
-    syslog(LOG_INFO | LOG_USER, "server daemon stopped");
+    syslog(LOG_INFO | LOG_USER, "Server daemon started");
+    server.run();                                                 // Starting the game server itself.
+    syslog(LOG_INFO | LOG_USER, "Server daemon stopped");
   }
   catch (std::exception& e)
   {
     syslog(LOG_ERR | LOG_USER, "Exception: %s", e.what());
   }
-}
+
+  // No return / exit here - > The daemon is running in endless loop. Use SIGINT, SIGTERM, SIGKILL to terminate process.
+}}}
+
+/* ****************************************************************************************************************** *
+ ~ ~~~[ END OF THE MAZED_MAIN.CC ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
+ * ****************************************************************************************************************** */
