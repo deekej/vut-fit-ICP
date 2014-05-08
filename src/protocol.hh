@@ -1,29 +1,56 @@
+/**
+ * @file      protocol.hh
+ * @author    Dee'Kej (David Kaspar - xkaspa34)
+ * @version   0.9
+ * @brief     File for implementation of the client-server communication protocol.
+ *
+ * @detailed  This file includes C++ structures for representing communication protocol messages. These structures are
+ *            serialized with Boost's to make sure there's no problem with little/big endian representation.
+ */
+
+
+/* ****************************************************************************************************************** *
+ * ***[ START OF PROTOCOL.HH ]*************************************************************************************** *
+ * ****************************************************************************************************************** */
 
 #ifndef H_GUARD_PROTOCOL_HH
 #define H_GUARD_PROTOCOL_HH
 
+
+/* ****************************************************************************************************************** *
+ ~ ~~~[ HEADER FILES ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
+ * ****************************************************************************************************************** */
+
 #include <vector>
 #include <string>
 
-#include "connection.hh"
+#include "connection.hh"        // Including the communication connection for simpler includes.
+
+
+/* ****************************************************************************************************************** *
+ ~ ~~~[ PROTOCOL'S STRUCTURES ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
+ * ****************************************************************************************************************** */
 
 namespace protocol {
   enum E_move_result {
     POSSIBLE,
     NOT_POSSIBLE,
   };
-
+  
+  /**
+   *  Update message send to client's game instance: 
+   */
   struct update {
-    long long           update_num;
+    // long long           update_num;         // Sequence number - disabled for now.
     enum E_move_result  last_move;
-    unsigned char       players_count;
-    unsigned char       guardians_count;
+    unsigned char       players_count;      // Actual players count.
+    unsigned char       guardians_count;    // Actual number of guardians.
 
-    std::vector<std::pair<unsigned char, unsigned char>>  coords;
+    std::vector<std::pair<unsigned char, unsigned char>>  coords;   // Coordinates of each character.
 
     template <typename Archive> void serialize(Archive &ar, const unsigned int version __attribute__((unused)))
     {
-      ar & update_num;
+      // ar & update_num;
       ar & last_move;
       ar & players_count;
       ar & guardians_count;
@@ -42,14 +69,15 @@ namespace protocol {
     START_CONTINUE,
     PAUSE,
   };
-
+  
+  // Command issued by the player:
   struct command {
-    unsigned char player_num;
+    // unsigned char player_num;
     enum E_user_command cmd;
 
     template <typename Archive> void serialize(Archive &ar, const unsigned int version __attribute__((unused)))
     {
-      ar & player_num;
+      // ar & player_num;
       ar & cmd;
     }
   };
@@ -63,11 +91,14 @@ namespace protocol {
     FINISHED,
   };
 
+  /**
+   *  Structure containing information about one specific game instance.
+   */
   struct game_info {
-    unsigned char used_slots;
-    enum E_game_status status;
-    std::string UID;
-    std::string maze_name;
+    unsigned char       used_slots;
+    enum E_game_status  status;
+    std::string         UID;
+    std::string         maze_name;
   
     std::vector<std::string> players;
 
@@ -105,7 +136,7 @@ namespace protocol {
     TERMINATE_GAME,
   };
 
-  #define E_CTRL_TYPE_SIZE 13U
+  #define E_CTRL_TYPE_SIZE 13U    // Used as control mechanism against enum overflow. Always update!
 
   enum E_info_type {
     HELLO,
@@ -137,6 +168,9 @@ namespace protocol {
     SET,
   };
 
+  /**
+   *  Messages used between client & server over TCP connection.
+   */
   struct message {
     enum E_type type;
 
@@ -178,4 +212,9 @@ namespace protocol {
   };
 }
 
+/* ****************************************************************************************************************** *
+ * ***[ END OF PROTOCOL.HH ]***************************************************************************************** *
+ * ****************************************************************************************************************** */
+
 #endif
+

@@ -10,8 +10,8 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/thread.hpp>
 
-#include "../protocol.hh"
 #include "mazed_globals.hh"
+#include "../protocol.hh"
 
 namespace asio = boost::asio;
 using namespace protocol;

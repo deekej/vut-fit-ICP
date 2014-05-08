@@ -1,6 +1,7 @@
 /**
  * @file      main.cc
  * @author    Dee'Kej (David Kaspar - xkaspa34)
+ * @note      This file is build upon official example of Boost FORK PROCESS PER CONNECTION by Christopher M. Kohlhoff.
  * @version   1.0
  * @brief     Server daemon of Maze-game for ICP course @ BUT FIT, 2014.
  *
@@ -35,7 +36,7 @@
  ~ ~~~[ GLOBAL VARIABLES ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
  * ****************************************************************************************************************** */
 
-ronst std::string HELP_STRING =
+const std::string HELP_STRING =
 "This is the server daemon for MAZE-GAME application,\n"
 "which is the part from project of ICP course @ BUT FIT, Czech Republic, 2014.\n\n"
 "Version:       0.1\n"
@@ -186,7 +187,9 @@ void terminate_children(const boost::system::error_code &error, int signal_numbe
 /* ****************************************************************************************************************** *
  ~ ~~~[ MAIN FUNCTION ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
  * ****************************************************************************************************************** */
-
+/**
+ *  Main function is here.
+ */
 int main(int argc, char *argv[])
 {{{
   process_params(argc, argv);
@@ -307,3 +310,4 @@ int main(int argc, char *argv[])
 /* ****************************************************************************************************************** *
  ~ ~~~[ END OF THE MAZED_MAIN.CC ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
  * ****************************************************************************************************************** */
+
