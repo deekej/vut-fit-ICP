@@ -105,9 +105,12 @@ namespace protocol {
     TERMINATE_GAME,
   };
 
+  #define E_CTRL_TYPE_SIZE 13U
+
   enum E_info_type {
     HELLO,
-    GAME_LOAD_DATA,
+    LOAD_DATA,
+    GAMES_DATA,
     PLAYER_JOINED,
     PLAYER_LEFT,
     PLAYER_KILLED,

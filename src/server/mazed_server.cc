@@ -31,7 +31,7 @@ namespace mazed {
     return;
   }
   
-  void mazed::server::run()
+  void server::run()
   {
     chdir(std::get<mazed::LOG_FOLDER>(settings_).c_str());
     log_file_.open(std::get<mazed::SERVER_LOG_FILE>(settings_), std::ofstream::out | std::ofstream::app);
@@ -47,13 +47,13 @@ namespace mazed {
     return;
   }
 
-  void mazed::server::start_signal_wait()
+  void server::start_signal_wait()
   {
     signal_.async_wait(boost::bind(&mazed::server::handle_signal_wait, this));
     return;
   }
 
-  void mazed::server::handle_signal_wait()
+  void server::handle_signal_wait()
   {
     if (acceptor_.is_open()) {
       int status = 0;
@@ -66,14 +66,14 @@ namespace mazed {
     }
   }
 
-  void mazed::server::start_accept()
+  void server::start_accept()
   {
     acceptor_.async_accept(socket_, boost::bind(&mazed::server::handle_accept, this, _1));
     
     return;
   }
 
-  void mazed::server::handle_accept(const boost::system::error_code &error)
+  void server::handle_accept(const boost::system::error_code &error)
   {
     if (error == false) {
       log_connect_new();
@@ -119,7 +119,7 @@ namespace mazed {
     return;
   }
 
-  inline std::string mazed::server::date_time_str()
+  inline std::string server::date_time_str()
   {
     std::ostringstream stream;
 
@@ -130,7 +130,7 @@ namespace mazed {
     return stream.str();
   }
 
-  void mazed::server::log(mazed::log_level level, const char *str)
+  void server::log(mazed::log_level level, const char *str)
   {
     assert(level > mazed::log_level::NONE);     // Possible wrong usage of log function.
 
@@ -166,7 +166,7 @@ namespace mazed {
     return;
   }
 
-  void mazed::server::log_connect_new()
+  void server::log_connect_new()
   {
     std::stringstream info;
     info << "Connection #" << connect_ID_ << " established";
@@ -175,7 +175,7 @@ namespace mazed {
     return;
   }
 
-  void mazed::server::log_connect_close()
+  void server::log_connect_close()
   {
     std::stringstream info;
     info << "Connection #" << connect_ID_ << " terminated";

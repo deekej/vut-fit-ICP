@@ -24,21 +24,21 @@ CXXFLAGS=-std=c++11 -pedantic -W -Wall -Wextra -g
 
 all: mazed
 
-mazed: mazed_main.o mazed_server.o
+mazed: mazed_main.o mazed_server.o mazed_cl_handler.o
 	$(LINKER) $(CXXFLAGS) $(LIBRARY_LINKAGE) -o $@ $^
 
 mazed_main.o: mazed_main.cc
 	$(CXX) $(CXXFLAGS) -o $@ -c $^
 
-mazed_server.o: mazed_server.cc mazed_server.hh mazed_cl_handler.hh ../connection.hh
+mazed_server.o: mazed_server.cc mazed_server.hh mazed_cl_handler.hh ../connection.hh ../protocol.hh
 	$(CXX) $(CXXFLAGS) -o $@ -c mazed_server.cc
 
+mazed_cl_handler.o: mazed_cl_handler.cc mazed_cl_handler.hh ../connection.hh ../protocol.hh
+	$(CXX) $(CXXFLAGS) -o $@ -c mazed_cl_handler.cc
+	
 client: client.cc
 	g++ $(CXXFLAGS) -o $@ client.cc $(LIBRARY_LINKAGE)
 
-#client_handler.o: client_handler.hh
-#	$(CXX) $(CXXFLAGS) -o $@ -c client_handler.hh
-	
 ############################################################
 # Other useful stuff:
 ############################################################
