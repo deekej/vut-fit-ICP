@@ -1,5 +1,5 @@
 /**
- * @file      connection.hh
+ * @file      serialization.hh
  * @author    Christopher M. Kohlhoff (chris@kohlhoff.com)
  * @note      This is example from official Boost website. Slightly modified by Dee'Kej (David Kaspar - xkaspa34).
  * @version   1.0
@@ -9,11 +9,11 @@
  */
 
 /* ****************************************************************************************************************** *
- * ***[ START OF CONNECTION.HH ]************************************************************************************* *
+ * ***[ START OF SERIALIZATION.HH ]************************************************************************************* *
  * ****************************************************************************************************************** */
 
-#ifndef H_GUARD_CONNECTION_HH
-#define H_GUARD_CONNECTION_HH
+#ifndef H_GUARD_SERIALIZATION_HH
+#define H_GUARD_SERIALIZATION_HH
 
 /* ****************************************************************************************************************** *
  ~ ~~~[ HEADER FILES ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
@@ -32,16 +32,16 @@
 
 
 /* ****************************************************************************************************************** *
- ~ ~~~[ CONNECTION IMPLEMENTATION ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
+ ~ ~~~[ SERIALIZATION IMPLEMENTATION ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
  * ****************************************************************************************************************** */
 
 namespace protocol {
   /**
-   *  Class for TCP connection. Each message sent using this connection consists of:
+   *  Class for serialization over TCP. Each message sent using this connection consists of:
    *  @li An 8-byte header containing the length of the serialized data in hexadecimal.
    *  @li The serialized data. 
    */
-  class tcp_connection {
+  class tcp_serialization {
       boost::asio::ip::tcp::socket &socket_;    // The socket to be used passed within constructor.
       enum { header_length = 8 };               // The size of a fixed length header.
       std::string outbound_header_;             // Holds an outbound header.
@@ -50,7 +50,7 @@ namespace protocol {
       std::vector<char> inbound_data_;          // Holds the inbound data.
 
     public:
-      tcp_connection(boost::asio::ip::tcp::socket &s) : socket_(s) {}
+      tcp_serialization(boost::asio::ip::tcp::socket &s) : socket_(s) {}
 
       boost::asio::ip::tcp::socket &socket()
       {{{
@@ -104,8 +104,8 @@ namespace protocol {
       void async_read(T& t, Handler handler)
       {{{
         // Read exactly the number of bytes in a header:
-        void (tcp_connection::*f)(const boost::system::error_code&, T&, boost::tuple<Handler>)
-          = &tcp_connection::handle_read_header<T, Handler>;
+        void (tcp_serialization::*f)(const boost::system::error_code&, T&, boost::tuple<Handler>)
+          = &tcp_serialization::handle_read_header<T, Handler>;
 
         boost::asio::async_read(socket_, boost::asio::buffer(inbound_header_),
                                 boost::bind(f, this, boost::asio::placeholders::error, boost::ref(t),
@@ -139,8 +139,8 @@ namespace protocol {
           // Starting an asynchronous call to receive the data:
           inbound_data_.resize(inbound_data_size);
 
-          void (tcp_connection::*f)(const boost::system::error_code&, T&, boost::tuple<Handler>)
-            = &tcp_connection::handle_read_data<T, Handler>;
+          void (tcp_serialization::*f)(const boost::system::error_code&, T&, boost::tuple<Handler>)
+            = &tcp_serialization::handle_read_data<T, Handler>;
 
           boost::asio::async_read(socket_, boost::asio::buffer(inbound_data_),
                                   boost::bind(f, this, boost::asio::placeholders::error, boost::ref(t), handler));
@@ -183,11 +183,11 @@ namespace protocol {
 
   // TODO/FIXME: remove header since it's apparently not needed as said by Christopher.
   /**
-   *  Class for UDP connection. Each message sent using this connection consists of:
+   *  Class for serialization over UDP . Each message sent using this connection consists of:
    *  @li An 8-byte header containing the length of the serialized data in hexadecimal.
    *  @li The serialized data. 
    */
-  class udp_connection {
+  class udp_serialization {
       boost::asio::ip::udp::socket &socket_;    // The socket to be used passed within constructor.
       enum { header_length = 8 };               // The size of a fixed length header.
       std::string outbound_header_;             // Holds an outbound header.
@@ -196,7 +196,7 @@ namespace protocol {
       std::vector<char> inbound_data_;          // Holds the inbound data.
 
     public:
-      udp_connection(boost::asio::ip::udp::socket &s) : socket_(s) {}
+      udp_serialization(boost::asio::ip::udp::socket &s) : socket_(s) {}
 
       boost::asio::ip::udp::socket &socket()
       {{{
@@ -250,8 +250,8 @@ namespace protocol {
       void async_read(T& t, Handler handler)
       {{{
         // Read exactly the number of bytes in a header:
-        void (udp_connection::*f)(const boost::system::error_code&, T&, boost::tuple<Handler>)
-          = &udp_connection::handle_read_header<T, Handler>;
+        void (udp_serialization::*f)(const boost::system::error_code&, T&, boost::tuple<Handler>)
+          = &udp_serialization::handle_read_header<T, Handler>;
 
         boost::asio::ip::udp::socket::async_receive(socket_, boost::asio::buffer(inbound_header_),
                                                     boost::bind(f, this, boost::asio::placeholders::error,
@@ -285,8 +285,8 @@ namespace protocol {
           // Starting an asynchronous call to receive the data:
           inbound_data_.resize(inbound_data_size);
 
-          void (udp_connection::*f)(const boost::system::error_code&, T&, boost::tuple<Handler>)
-            = &udp_connection::handle_read_data<T, Handler>;
+          void (udp_serialization::*f)(const boost::system::error_code&, T&, boost::tuple<Handler>)
+            = &udp_serialization::handle_read_data<T, Handler>;
 
           boost::asio::ip::udp::socket::async_receive(socket_, boost::asio::buffer(inbound_data_),
                                                       boost::bind(f, this, boost::asio::placeholders::error,
@@ -329,7 +329,7 @@ namespace protocol {
 }
 
 /* ****************************************************************************************************************** *
- * ***[ END OF CONNECTION.HH ]*************************************************************************************** *
+ * ***[ END OF SERIALIZATION.HH ]*************************************************************************************** *
  * ****************************************************************************************************************** */
 
 #endif
