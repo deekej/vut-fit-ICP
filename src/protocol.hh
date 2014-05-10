@@ -182,7 +182,7 @@ namespace protocol {
 
     enum E_status status;
 
-    std::string data;
+    std::vector<std::string> data;
 
     template <typename Archive> void serialize(Archive &ar, const unsigned int version __attribute__((unused)))
     {

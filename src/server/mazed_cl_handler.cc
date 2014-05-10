@@ -683,16 +683,17 @@ namespace mazed {
    * @param[in]   type        Type of the message to be used. (Used for assertion checking for protocol correctness.)
    * @param[in]   ctrl_type   Specification of the CTRL message.
    * @param[in]   status      Status of the message.
-   * @param[in]   str         Additional information of the message, empty by default.
+   * @param[in]   data        Additional information of the message, empty by default.
    */
-  inline void client_handler::message_prepare(E_type type, E_ctrl_type ctrl_type, E_status status, std::string str)
+  inline void client_handler::message_prepare(E_type type, E_ctrl_type ctrl_type, E_status status,
+                                              std::vector<std::string> data)
   {{{
     assert(type == CTRL);       // Make sure we're sending the right type of message.
 
     message_out_.type = type;
     message_out_.ctrl_type = ctrl_type;
     message_out_.status = status;
-    message_out_.data = str;
+    message_out_.data = data;
 
     return;
   }}}
@@ -704,16 +705,17 @@ namespace mazed {
    * @param[in]   type        Type of the message to be used. (Used for assertion checking for protocol correctness.)
    * @param[in]   info_type   Specification of the INFO message.
    * @param[in]   status      Status of the message.
-   * @param[in]   str         Additional information of the message, empty by default.
+   * @param[in]   data        Additional information of the message, empty by default.
    */
-  inline void client_handler::message_prepare(E_type type, E_info_type info_type, E_status status, std::string str)
+  inline void client_handler::message_prepare(E_type type, E_info_type info_type, E_status status,
+                                              std::vector<std::string> data)
   {{{
     assert(type == INFO);       // Make sure we're sending the right type of message.
 
     message_out_.type = type;
     message_out_.info_type = info_type;
     message_out_.status = status;
-    message_out_.data = str;
+    message_out_.data = data;
 
     return;
   }}}
@@ -725,16 +727,17 @@ namespace mazed {
    * @param[in]   type        Type of the message to be used. (Used for assertion checking for protocol correctness.)
    * @param[in]   error_type  Specification of the ERROR message.
    * @param[in]   status      Status of the message.
-   * @param[in]   str         Additional information of the message, empty by default.
+   * @param[in]   data        Additional information of the message, empty by default.
    */
-  inline void client_handler::message_prepare(E_type type, E_error_type error_type, E_status status, std::string str)
+  inline void client_handler::message_prepare(E_type type, E_error_type error_type, E_status status,
+                                              std::vector<std::string> data)
   {{{
     assert(type == ERROR);       // Make sure we're sending the right type of message.
 
     message_out_.type = type;
     message_out_.error_type = error_type;
     message_out_.status = status;
-    message_out_.data = str;
+    message_out_.data = data;
 
     return;
   }}}

@@ -158,9 +158,12 @@ namespace mazed {
 
       // // // // // // // // // // //
 
-      inline void message_prepare(E_type type, E_ctrl_type ctrl_type, E_status status, std::string str = "");
-      inline void message_prepare(E_type type, E_info_type info_type, E_status status, std::string str = "");
-      inline void message_prepare(E_type type, E_error_type error_type, E_status status, std::string str = "");
+      inline void message_prepare(E_type type, E_ctrl_type ctrl_type, E_status status,
+                                  std::vector<std::string> data = {""});
+      inline void message_prepare(E_type type, E_info_type info_type, E_status status,
+                                  std::vector<std::string> data = {""});
+      inline void message_prepare(E_type type, E_error_type error_type, E_status status,
+                                  std::vector<std::string> data = {""});
 
       inline std::string date_time_str();
       void log(mazed::log_level level, const char *str);
