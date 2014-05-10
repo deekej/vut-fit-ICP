@@ -53,7 +53,7 @@ namespace mazed {
       asio::io_service                  &io_service_;
 
       // Pointer to serialization over the established connection:
-      std::unique_ptr<protocol::tcp_connection> pu_tcp_connect_;
+      std::unique_ptr<protocol::tcp_serialization> pu_tcp_connect_;
       
       // Objects for checking client's connection timeout:
       asio::io_service                  timeout_io_service_;
