@@ -36,7 +36,7 @@ mazed_server.o: mazed_server.cc mazed_server.hh mazed_globals.hh mazed_server_co
 mazed_server_connection.o: mazed_server_connection.cc mazed_server_connection.hh mazed_globals.hh mazed_cl_handler.hh
 	$(CXX) $(CXXFLAGS) -o $@ -c mazed_server_connection.cc
 
-mazed_cl_handler.o: mazed_cl_handler.cc mazed_cl_handler.hh mazed_globals.hh ../connection.hh ../protocol.hh
+mazed_cl_handler.o: mazed_cl_handler.cc mazed_cl_handler.hh mazed_globals.hh ../serialization.hh ../protocol.hh
 	$(CXX) $(CXXFLAGS) -o $@ -c mazed_cl_handler.cc
 	
 client: client.cc

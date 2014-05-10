@@ -24,7 +24,7 @@
 #include <vector>
 #include <string>
 
-#include "connection.hh"        // Including the communication connection for simpler includes.
+#include "serialization.hh"        // Including the communication connection for simpler includes.
 
 
 /* ****************************************************************************************************************** *
