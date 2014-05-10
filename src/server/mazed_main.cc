@@ -1,5 +1,5 @@
 /**
- * @file      main.cc
+ * @file      mazed_main.cc
  * @author    Dee'Kej (David Kaspar - xkaspa34)
  * @note      This file is build upon official example of Boost FORK PROCESS PER CONNECTION by Christopher M. Kohlhoff.
  * @version   1.0
@@ -8,6 +8,10 @@
  * @detailed  This is a main program for running the server daemon of the game. It can be launched with several options
  *            which allows modifying the server's behaviour. See the help of the program for more info.
  */
+
+/* ****************************************************************************************************************** *
+ * ***[ START OF MAZED_MAIN.HH ]************************************************************************************* *
+ * ****************************************************************************************************************** */
 
 
 /* ****************************************************************************************************************** *
@@ -44,7 +48,7 @@ const std::string HELP_STRING =
 "Website:       https://bitbucket.org/deekej\n\n"
 "Optional arguments";
 
-mazed::settings_tuple SETTINGS;                             // Stores the server settings for other processes.
+mazed::settings_tuple SETTINGS;                             // Stores the server settings for other threads.
 
 int LOG_FILE_FD {-1};                                       // Log file descriptor backup for closing at exit.
 std::string DAEMON_LOG_FILE {"daemon.log"};                 // Name for starting log file of this process.
@@ -144,8 +148,8 @@ void process_params(int argc, char *argv[])
 
     return;
   }
-  catch (std::exception & e) {
-    std::cerr << process_name << ": Error: " << e.what() << std::endl;
+  catch (std::exception & ex) {
+    std::cerr << process_name << ": Error: " << ex.what() << std::endl;
     exit(mazed::exit_codes::E_WRONG_PARAMS);
   }
   catch (...) {
@@ -168,6 +172,7 @@ void close_log()
 /* ****************************************************************************************************************** *
  ~ ~~~[ MAIN FUNCTION ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
  * ****************************************************************************************************************** */
+
 /**
  *  Main function is here.
  */
@@ -284,6 +289,6 @@ int main(int argc, char *argv[])
 }}}
 
 /* ****************************************************************************************************************** *
- ~ ~~~[ END OF THE MAZED_MAIN.CC ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
+ * ***[ END OF MAZED_MAIN.HH ]*************************************************************************************** *
  * ****************************************************************************************************************** */
 
