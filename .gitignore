@@ -1,7 +1,2 @@
-old/
-src/server/mazed
-src/server/client
-src/server/client.cc
-src/server/test.cc
 boost/
-serial/
+qt/
