@@ -20,6 +20,7 @@
 #include <sstream>
 
 #include <boost/date_time.hpp>
+#include <boost/thread/thread_guard.hpp>
 
 #include <sys/wait.h>
 
@@ -37,16 +38,15 @@ using     tcp = boost::asio::ip::tcp;
 namespace mazed {
   server::server(boost::asio::io_service &io_service, mazed::settings_tuple &settings) :
     io_service_(io_service),
-    signal_(io_service, SIGCHLD),
-    acceptor_(io_service, ip::tcp::endpoint(ip::tcp::v4(), std::get<SERVER_PORT>(settings))),
-    socket_(io_service),
+    signals_(io_service, SIGINT, SIGTERM),
     settings_(settings)
   {{{
-    // Create a formatting object for logging purposes:
+    // Create a formatting object for the date_time_str():
     dt_format_ = std::locale(std::locale::classic(), new boost::posix_time::time_facet("%Y-%m-%d @ %H:%M:%s"));
 
     return;
   }}}
+
 
   server::~server()
   {{{
@@ -55,22 +55,28 @@ namespace mazed {
     return;
   }}}
   
+  // // // // // // // // // // // // //
+
   /**
-   *  Runs the server instance itself.
+   * Runs the server instance itself.
    *
-   *  We're opening the log file here, not in constructor, to avoid unwanted too-early logging.
+   * We're opening the log file here, not in constructor, to avoid unwanted too-early logging.
    */
   void server::run()
   {{{
     chdir(std::get<mazed::LOG_FOLDER>(settings_).c_str());
     log_file_.open(std::get<mazed::SERVER_LOG_FILE>(settings_), std::ofstream::out | std::ofstream::app);
 
-    log(mazed::log_level::ERROR, "----------------------------");
+    if (std::get<mazed::LOGGING_LEVEL>(settings_) != mazed::log_level::NONE) {
+      log_file_ << "----------------------------" << std::endl;
+    }
+
     log(mazed::log_level::INFO, "Server is RUNNING");
+    
+    signals_.async_wait(boost::bind(&server::signals_handler, this));
 
-    start_signal_wait();
-    start_accept();
-
+    boost::thread           thread_starter_loop(boost::bind(&server::thread_starter, this));
+    boost::thread_guard<>   thread_starter_guard(thread_starter_loop);
     io_service_.run();
     
     return;
@@ -78,98 +84,60 @@ namespace mazed {
 
 
   /**
-   *  Starts waiting on asynchronous SIGCHLD signal and bind a handler for invocation.
+   * Member function for starting of accepting new connection after the previous one was established.
    */
-  void server::start_signal_wait()
+  void server::thread_starter()
   {{{
-    signal_.async_wait(boost::bind(&mazed::server::handle_signal_wait, this));
+    boost::unique_lock<boost::mutex> lock(connection_mutex_);
+
+    run_mutex_.lock();
+    while (run_ == true) {
+      run_mutex_.unlock();
+      
+      // Launch a new connection thread, it will start accept automatically:
+      boost::thread connection_receive(boost::bind(&server::connection_thread, this));
+      
+      // Wait for notification to create a new connection:
+      new_connection_.wait(lock);
+      connect_ID_++;
+
+      run_mutex_.lock();
+    }
+    run_mutex_.unlock();
+
     return;
   }}}
 
 
   /**
-   *  Handler for registered SIGCHLD signal.
+   * Creates a new instance of server_connection which creates it's own io_service, socket and acceptor. It notifies the
+   * thread_started() when it should create a new thread for new connection again.
    */
-  void server::handle_signal_wait()
+  void server::connection_thread()
   {{{
-    // Checking if the process is parent or not:
-    if (acceptor_.is_open()) {
-      int status = 0;
-
-      // Reaping completed child processes to avoid zombies:
-      while (waitpid(-1, &status, WNOHANG) > 0) {
-        ;
-      }
-
-      start_signal_wait();
-    }
-  }}}
-
-
-  
-  /**
-   *  Starts new accepting on given port. (Just like a listen() does.)
-   */
-  void server::start_accept()
-  {{{
-    acceptor_.async_accept(socket_, boost::bind(&mazed::server::handle_accept, this, _1));
+    std::unique_ptr<mazed::server_connection> pu_connect (new mazed::server_connection(settings_, this));
+    pu_connect->run();
     return;
   }}}
 
 
   /**
-   *  Handler for new incoming connection. The process forks allowing another non-blocking connection to be received. 
+   * Handles the SIGINT or SIGTERM signal, so the server daemon is properly shutdown.
    */
-  void server::handle_accept(const boost::system::error_code &error)
+  void server::signals_handler()
   {{{
-    if (error == false) {
-      log_connect_new();
-
-      // Inform io_service to prepare for forking:
-      io_service_.notify_fork(boost::asio::io_service::fork_prepare);
-
-      if (fork() == 0) {
-        // Inform io_service fork is finished and that this is the child:
-        io_service_.notify_fork(boost::asio::io_service::fork_child);
-
-        // We don't need acceptor or signal handler in the child:
-        acceptor_.close();
-        signal_.cancel();
-
-        // Create new client handler and pass the opened socket and io_service to that:
-        mazed::client_handler *p_handler = new mazed::client_handler(socket_, io_service_, settings_, connect_ID_);
-
-        p_handler->run();             // Run the handler.
-        delete p_handler;             // Clean up.
-
-        // Disconnect properly:
-        socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both);
-        socket_.close();
-
-        log_connect_close();
-
-        exit(exit_codes::NO_ERROR);   // No more work to do.
-      }
-      else {
-        // Inform io_service fork is finished and that this is the parent:
-        io_service_.notify_fork(boost::asio::io_service::fork_parent);
-        
-        // Close the socket for reuse, child has it's own instance open:
-        socket_.close();
-        connect_ID_++;
-
-        start_accept();               // Start again.
-      }
+    run_mutex_.lock();
+    {
+      run_ = false;
+      new_connection_.notify_one();
     }
-    else {
-      std::string err = "Accept failed - ";
-      log(mazed::log_level::ERROR, err.append(error.message()).c_str());
-      start_accept();
-    }
+    run_mutex_.unlock();
 
+    io_service_.stop();
     return;
   }}}
 
+  // // // // // // // // // // // // //
 
   /**
    *  @return The string of actual date and time.
@@ -187,7 +155,7 @@ namespace mazed {
 
   
   /**
-   *  Logging function. It's behaviour is controlled by actual logging level settings.
+   *  Logging function. It's behaviour is controlled by the actual logging level setting.
    *
    *  @param[in]  level Logging level of the string to be logged.
    *  @param[in]  str String to be logged.
@@ -197,7 +165,7 @@ namespace mazed {
     assert(level > mazed::log_level::NONE);     // Possible wrong usage of log function.
 
     if (level < std::get<mazed::LOGGING_LEVEL>(settings_)) {
-      return;     // Not requested level of logging, nothing to do.
+      return;                                   // Not requested level of logging, nothing to do.
     }
     
     log_mutex_.lock();                          // Making sure the log message are not interleaved.
@@ -232,22 +200,23 @@ namespace mazed {
   /**
    * Wrapper function for logging new incoming connection.
    **/
-  void server::log_connect_new()
+  void server::log_connect_new(unsigned connect_ID)
   {{{
     std::stringstream info;
-    info << "Connection #" << connect_ID_ << " established";
+    info << "Connection #" << connect_ID << " established";
     log(mazed::log_level::INFO, info.str().c_str());
 
     return;
   }}}
 
+
   /**
    * Wrapper function for logging finished connection.
    **/
-  void server::log_connect_close()
+  void server::log_connect_close(unsigned connect_ID)
   {{{
     std::stringstream info;
-    info << "Connection #" << connect_ID_ << " terminated";
+    info << "Connection #" << connect_ID << " terminated";
     log(mazed::log_level::INFO, info.str().c_str());
 
     return;

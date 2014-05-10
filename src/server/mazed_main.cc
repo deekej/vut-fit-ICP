@@ -165,25 +165,6 @@ void close_log()
 }}}
 
 
-/**
- *  Signal handler function which sends SIGTERM to all child processes to make sure we don't leave any zombies.
- *
- *  @param[in] error Reference to Boost's error indication.
- *  @param[in] signal_number The actual signal received - SIGINT or SIGTERM.
- */
-void terminate_children(const boost::system::error_code &error, int signal_number)
-{{{
-  if (error == false && (signal_number == SIGINT || signal_number == SIGTERM)) {
-    syslog(LOG_INFO | LOG_USER, "terminating all child processes");
-    pid_t process_group = getpgrp();
-    killpg(process_group, SIGTERM);
-  }
-  else {
-    syslog(LOG_ERR | LOG_USER, "Error: %s", error.message().c_str());
-  }
-}}}
-
-
 /* ****************************************************************************************************************** *
  ~ ~~~[ MAIN FUNCTION ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
  * ****************************************************************************************************************** */
@@ -202,13 +183,6 @@ int main(int argc, char *argv[])
     // Initializing the server before becoming a daemon. If the process is started from shell, all initial errors will
     // be reported to the user.
     mazed::server server(io_service, SETTINGS);
-
-    // Registering handlers for signals:
-    boost::asio::signal_set io_service_stop(io_service, SIGINT, SIGTERM);
-    io_service_stop.async_wait(boost::bind(&boost::asio::io_service::stop, &io_service));
-
-    boost::asio::signal_set children_kill(io_service, SIGINT, SIGTERM);
-    children_kill.async_wait(terminate_children);
 
     // Making safe fork by informing io_service about upcoming fork:
     io_service.notify_fork(boost::asio::io_service::fork_prepare);
@@ -298,6 +272,8 @@ int main(int argc, char *argv[])
     syslog(LOG_INFO | LOG_USER, "Server daemon started");
     server.run();                                                 // Starting the game server itself.
     syslog(LOG_INFO | LOG_USER, "Server daemon stopped");
+
+    return mazed::exit_codes::NO_ERROR;
   }
   catch (std::exception& e)
   {

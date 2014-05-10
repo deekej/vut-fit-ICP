@@ -17,27 +17,33 @@ LINKER=g++
 LIBRARY_LINKAGE= -lboost_program_options -lboost_system -lboost_thread -lpthread -lboost_filesystem -lboost_serialization#-I $(BOOST_PATH)
 
 # Parameters of compilation.
-CXXFLAGS=-std=c++11 -pedantic -W -Wall -Wextra -g
+CXXFLAGS=-std=c++11 -pedantic -W -Wall -Wextra -O3
 
 # Default rule for creating all required files:
 ############################################################
 
 all: mazed
 
-mazed: mazed_main.o mazed_server.o mazed_cl_handler.o
+mazed: mazed_main.o mazed_server.o mazed_server_connection.o mazed_cl_handler.o
 	$(LINKER) $(CXXFLAGS) $(LIBRARY_LINKAGE) -o $@ $^
 
-mazed_main.o: mazed_main.cc
-	$(CXX) $(CXXFLAGS) -o $@ -c $^
+mazed_main.o: mazed_main.cc mazed_globals.hh
+	$(CXX) $(CXXFLAGS) -o $@ -c mazed_main.cc
 
-mazed_server.o: mazed_server.cc mazed_server.hh mazed_cl_handler.hh ../connection.hh ../protocol.hh
+mazed_server.o: mazed_server.cc mazed_server.hh mazed_globals.hh mazed_server_connection.hh
 	$(CXX) $(CXXFLAGS) -o $@ -c mazed_server.cc
 
-mazed_cl_handler.o: mazed_cl_handler.cc mazed_cl_handler.hh ../connection.hh ../protocol.hh
+mazed_server_connection.o: mazed_server_connection.cc mazed_server_connection.hh mazed_globals.hh mazed_cl_handler.hh
+	$(CXX) $(CXXFLAGS) -o $@ -c mazed_server_connection.cc
+
+mazed_cl_handler.o: mazed_cl_handler.cc mazed_cl_handler.hh mazed_globals.hh ../connection.hh ../protocol.hh
 	$(CXX) $(CXXFLAGS) -o $@ -c mazed_cl_handler.cc
 	
 client: client.cc
 	g++ $(CXXFLAGS) -o $@ client.cc $(LIBRARY_LINKAGE)
+
+test: test.cc
+	g++ $(CXXFLAGS) -o $@ $^ $(LIBRARY_LINKAGE)
 
 ############################################################
 # Other useful stuff:
