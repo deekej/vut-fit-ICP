@@ -49,7 +49,7 @@ namespace mazed {
     log_file_.open(filename.str(), std::ofstream::out | std::ofstream::trunc);
     log(mazed::log_level::INFO, "Client handler has STARTED (with TCP connection inherited)");
 
-    pu_tcp_connect_ = std::unique_ptr<protocol::tcp_connection>(new protocol::tcp_connection(socket));
+    pu_tcp_connect_ = std::unique_ptr<protocol::tcp_serialization>(new protocol::tcp_serialization(socket));
     log(mazed::log_level::INFO, "New serialization over TCP connection created");
 
     messages_out_.resize(1);        // Avoiding segmentation fault because of using of operator = of the vector buffer.
