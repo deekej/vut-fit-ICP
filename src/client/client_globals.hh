@@ -38,7 +38,7 @@ namespace client {
 
   using settings_tuple = std::tuple<
     std::string,        // IPv4_ADDRESS
-    unsigned short,     // SERVER_PORT
+    std::string,        // SERVER_PORT
     std::string,        // CONFIG_FILE_LOC
     long,               // HELLO_INTERVAL
     std::string,        // NICK
