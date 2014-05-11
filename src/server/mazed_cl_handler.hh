@@ -23,7 +23,6 @@
 #include <vector>
 
 #include <boost/asio.hpp>
-#include <boost/serialization/vector.hpp>
 #include <boost/thread.hpp>
 
 #include "mazed_globals.hh"
