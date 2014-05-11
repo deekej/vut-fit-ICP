@@ -24,7 +24,9 @@
 #include <vector>
 #include <string>
 
-#include "serialization.hh"        // Including the communication connection for simpler includes.
+#include <boost/serialization/vector.hpp>   // For simpler includes.
+
+#include "serialization.hh"                 // Including the serialization connection for simpler includes.
 
 
 /* ****************************************************************************************************************** *
