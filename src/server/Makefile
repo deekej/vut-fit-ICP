@@ -54,19 +54,19 @@ test: test.cc
 
 run: all kill
 	@./mazed --logging 1 -t 4000
-	@./show.sh
+	@./show.sh "./mazed"
 
 show:
-	@./show.sh
+	@./show.sh "./mazed"
 
 kill:
-	@./mazed-kill.sh
+	@./mazed-kill.sh "./mazed"
 
 # Remove object files generated during compiling.
 clean:
-	@echo "make[2]: Cleaning object files..."
+	@echo "make[2]: Removing object files"
 	@rm -f *.o
 
 clean-all: clean
-	@echo "make[2]: Cleaning executable files..."
+	@echo "make[2]: Removing executable files"
 	@rm -f mazed
