@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PIDs="$(pidof "./mazed")"
+PIDs="$(pidof "$1")"
 
 if [[ -z "$PIDs" ]]; then
   exit 0
