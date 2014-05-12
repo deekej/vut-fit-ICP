@@ -14,6 +14,7 @@
  * ****************************************************************************************************************** */
 
 // C++ header files:
+#include <iostream>
 #include <iterator>
 #include <string>
 #include <tuple>
@@ -23,6 +24,7 @@
 
 // Program header files:
 #include "client_globals.hh"
+#include "client_connections.hh"
 
 
 /* ****************************************************************************************************************** *
@@ -56,6 +58,7 @@ void process_params(int argc, char *argv[])
 
   int           port;
   long          hello_interval;
+  long          max_ping;
   std::string   IPv4_address;
   std::string   config_file_loc;
 
@@ -75,6 +78,9 @@ void process_params(int argc, char *argv[])
 
     help.add_options() ("config,c", params::value<std::string>(&config_file_loc)->default_value("~/.maze_client"),
                         "specify the config file location (default: ~/.maze_client)");
+
+    help.add_options() ("timeout,t", params::value<long>(&max_ping)->default_value(20000),
+                        "specify the max ping between client and server (default: 20000)");
 
     params::variables_map var_map;
     params::store(params::parse_command_line(argc, argv, help), var_map);
@@ -96,12 +102,21 @@ void process_params(int argc, char *argv[])
       std::cerr << "') for option '--keep-alive' is invalid" << std::endl;
       exit(client::exit_codes::E_WRONG_PARAMS);
     }
+
+    if (var_map["timeout"].as<long>() < 1000) {
+      std::cerr << process_name << ": Error: the argument ('" << var_map["timeout"].as<long>();
+      std::cerr << "') for option '--timeout' is invalid" << std::endl;
+      exit(client::exit_codes::E_WRONG_PARAMS);
+    }
     
+    std::get<client::PROCESS_NAME>(SETTINGS) = process_name;
     std::get<client::IPv4_ADDRESS>(SETTINGS) = IPv4_address;
-    std::get<client::SERVER_PORT>(SETTINGS) = port;
     std::get<client::CONFIG_FILE_LOC>(SETTINGS) = config_file_loc;
     std::get<client::HELLO_INTERVAL>(SETTINGS) = hello_interval;
+    std::get<client::MAX_PING>(SETTINGS) = max_ping;
 
+    // FIXME: Make proper int -> string conversion:
+    std::get<client::SERVER_PORT>(SETTINGS) = port;
     return;
   }
   catch (std::exception & ex) {
@@ -124,6 +139,8 @@ void process_params(int argc, char *argv[])
  */
 int main(int argc, char *argv[])
 {{{
+  std::ios::sync_with_stdio(false);
+
   process_params(argc, argv);
 
   // // // // // // // // //
