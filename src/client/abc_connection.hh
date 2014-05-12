@@ -1,5 +1,5 @@
 /**
- * @file      client_connection.hh
+ * @file      abc_connection.hh
  * @author    Dee'Kej (David Kaspar - xkaspa34)
  * @version   1.0
  * @brief     Abstract Base Class (ABC) for creating a TCP or UDP connection to the server.
@@ -7,11 +7,12 @@
 
 
 /* ****************************************************************************************************************** *
- * ***[ START OF CLIENT_CONNECTION.HH ]****************************************************************************** *
+ * ***[ START OF ABC_CONNECTION.HH ]********************************************************************************* *
  * ****************************************************************************************************************** */
 
-#ifndef H_GUARD_CLIENT_CONNECTION_HH
-#define H_GUARD_CLIENT_CONNECTION_HH
+#ifndef H_GUARD_ABC_CONNECTION_HH
+#define H_GUARD_ABC_CONNECTION_HH
+
 
 /* ****************************************************************************************************************** *
  ~ ~~~[ HEADER FILES ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
@@ -26,11 +27,16 @@
 
 #include "../protocol.hh"
 
+
 /* ****************************************************************************************************************** *
  ~ ~~~[ CONNECTION CLASS ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
  * ****************************************************************************************************************** */
 
-namespace client {
+namespace ABC {
+
+  /**
+   * Abstract base class to be derived for creating a new specialized TCP and UDP connection classes.
+   */
   class connection {
     protected:
       // Connection prerequisites:
@@ -50,15 +56,16 @@ namespace client {
       boost::asio::deadline_timer               timeout_out_;
       
       // Thread for asynchronous receiving:
-      std::unique_ptr<boost::thread>            async_receive_thread_;
+      std::unique_ptr<boost::thread>            pu_asio_thread_;
 
       // // // // // // // // // // //
+
+      virtual void asio_loops_start() = 0;
 
     public:
       virtual bool connect() = 0;
       virtual void disconnect() = 0;
       virtual void async_send(const protocol::message &msg) = 0;
-      virtual void async_receive_start() = 0;
 
       // // // // // // // // // // //
 
@@ -66,8 +73,10 @@ namespace client {
         socket_(io_service_), resolver_(io_service_), query_(IP_address, port),
         timeout_in_(io_service_), timeout_out_(io_service_)
       {{{
+        // Shared initialization:
         it_endpoint_ = resolver_.resolve(query_);
         endpoint_ = *it_endpoint_;
+        messages_out_.resize(1);    // Avoiding segmentation fault.
         return;
       }}}
 
@@ -83,8 +92,8 @@ namespace client {
 
         io_service_.stop();
 
-        if ((*async_receive_thread_).joinable() == true) {
-          (*async_receive_thread_).join();
+        if ((*pu_asio_thread_).joinable() == true) {
+          (*pu_asio_thread_).join();
         }
         
         return;
@@ -94,7 +103,7 @@ namespace client {
 
 
 /* ****************************************************************************************************************** *
- * ***[ END OF CLIENT_CONNECTION.HH ]******************************************************************************** *
+ * ***[ END OF ABC_CONNECTION.HH ]*********************************************************************************** *
  * ****************************************************************************************************************** */
 
 #endif
