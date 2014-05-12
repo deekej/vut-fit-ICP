@@ -157,7 +157,9 @@ namespace protocol {
     WRONG_PROTOCOL,
     EMPTY_MESSAGE,
     MULTIPLE_MESSAGES,
+    CLOSED_CONNECTION,
     TIMEOUT,
+    HANDSHAKE,
     ALREADY_PLAYED,
     UNKNOWN_ERROR,
   };
@@ -168,6 +170,7 @@ namespace protocol {
     QUERY,
     UPDATE,
     SET,
+    LOCAL,
   };
 
   /**

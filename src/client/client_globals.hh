@@ -28,29 +28,39 @@
 
 namespace client {
   enum E_settings {
-    IPv4_ADDRESS = 0,
+    PROCESS_NAME = 0x0,
+    IPv4_ADDRESS,
     SERVER_PORT,
     CONFIG_FILE_LOC,
     HELLO_INTERVAL,
+    MAX_PING,
     NICK,
     PUID,
   };
 
+  enum E_event {
+    MESSAGE = 0x0,
+    USER_INPUT,
+  };
+
   using settings_tuple = std::tuple<
+    std::string,        // PROCESS_NAME
     std::string,        // IPv4_ADDRESS
     std::string,        // SERVER_PORT
     std::string,        // CONFIG_FILE_LOC
     long,               // HELLO_INTERVAL
+    long,               // MAX_PING
     std::string,        // NICK
     std::string         // PUID
   >;
  
   namespace exit_codes {
     enum {
-      NO_ERROR = 0,
+      NO_ERROR = 0x0,
       E_WRONG_PARAMS,
       E_OPEN,
       E_WRITE,
+      E_CONNECT_FAILED,
       E_UNKNOWN_EXCEPT,
     };
   }
