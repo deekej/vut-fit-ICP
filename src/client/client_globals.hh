@@ -54,16 +54,14 @@ namespace client {
     std::string         // PUID
   >;
  
-  namespace exit_codes {
-    enum {
-      NO_ERROR = 0x0,
-      E_WRONG_PARAMS,
-      E_OPEN,
-      E_WRITE,
-      E_CONNECT_FAILED,
-      E_UNKNOWN_EXCEPT,
-    };
-  }
+  enum exit_codes {
+    NO_ERROR = 0x0,
+    E_WRONG_PARAMS,
+    E_OPEN,
+    E_WRITE,
+    E_CONNECT_FAILED,
+    E_UNKNOWN_EXCEPT,
+  };
 }
 
 

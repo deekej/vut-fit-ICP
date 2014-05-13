@@ -24,7 +24,7 @@
 
 // Program header files:
 #include "client_globals.hh"
-#include "client_connections.hh"
+#include "client_mediator.hh"
 
 
 /* ****************************************************************************************************************** *
@@ -80,7 +80,7 @@ void process_params(int argc, char *argv[])
                         "specify the config file location (default: ~/.maze_client)");
 
     help.add_options() ("timeout,t", params::value<long>(&max_ping)->default_value(20000),
-                        "specify the max ping between client and server (default: 20000)");
+                        "specify the max ping server (default: 20000)");
 
     params::variables_map var_map;
     params::store(params::parse_command_line(argc, argv, help), var_map);
@@ -115,8 +115,7 @@ void process_params(int argc, char *argv[])
     std::get<client::HELLO_INTERVAL>(SETTINGS) = hello_interval;
     std::get<client::MAX_PING>(SETTINGS) = max_ping;
 
-    // FIXME: Make proper int -> string conversion:
-    std::get<client::SERVER_PORT>(SETTINGS) = port;
+    std::get<client::SERVER_PORT>(SETTINGS) = std::to_string(port);
     return;
   }
   catch (std::exception & ex) {
@@ -144,8 +143,10 @@ int main(int argc, char *argv[])
   process_params(argc, argv);
 
   // // // // // // // // //
+  
+  client::mediator mediator(SETTINGS);
 
-  return client::exit_codes::NO_ERROR;
+  return mediator.run();
 }}}
 
 /* ****************************************************************************************************************** *
