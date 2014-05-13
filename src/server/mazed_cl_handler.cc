@@ -76,11 +76,14 @@ namespace mazed {
     boost::shared_ptr<boost::thread> timeout_thread(new boost::thread(&client_handler::start_timeout, this));
 
     run_processing();
-    
+
     // Close the given socket properly and cancel any pending async operations on it:
-    socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both);
-    socket_.cancel();
-    socket_.close();
+    if (socket_.is_open() == true) {
+      boost::system::error_code ignored_error;
+      socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignored_error);
+      socket_.cancel();
+      socket_.close();
+    }
 
     timeout_.cancel();              // Cancel any pending timeout checks.
 

@@ -117,13 +117,13 @@ namespace protocol {
   // // // // // // // // // // // // // // // //
 
   enum E_type {
-    CTRL,
+    CTRL = 0,
     INFO,
     ERROR,
   };
 
   enum E_ctrl_type {
-    SYN,
+    SYN = 0,
     FIN,
     LOGIN_OR_CREATE_USER,
     SET_NICK,
@@ -141,7 +141,7 @@ namespace protocol {
   #define E_CTRL_TYPE_SIZE 13U    // Used as control mechanism against enum overflow. Always update!
 
   enum E_info_type {
-    HELLO,
+    HELLO = 0,
     LOAD_DATA,
     GAMES_DATA,
     PLAYER_JOINED,
@@ -154,16 +154,20 @@ namespace protocol {
   };
 
   enum E_error_type {
-    WRONG_PROTOCOL,
+    WRONG_PROTOCOL = 0,
     EMPTY_MESSAGE,
     MULTIPLE_MESSAGES,
+    CONNECTION_FAILED,
+    ALREADY_CONNECTED,
+    REJECTED_CONNECTION,
+    CLOSED_CONNECTION,
     TIMEOUT,
     ALREADY_PLAYED,
     UNKNOWN_ERROR,
   };
 
   enum E_status {
-    ACK,
+    ACK = 0,
     NACK,
     QUERY,
     UPDATE,
