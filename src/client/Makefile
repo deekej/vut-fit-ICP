@@ -17,40 +17,25 @@ LINKER=g++
 LIBRARY_LINKAGE= -lboost_program_options -lboost_system -lboost_thread -lpthread -lboost_filesystem -lboost_serialization#-I $(BOOST_PATH)
 
 # Parameters of compilation.
-CXXFLAGS=-std=c++11 -pedantic -W -Wall -Wextra -O3
+CXXFLAGS=-std=c++11 -pedantic -W -Wall -Wextra -g
 
 # Default rule for creating all required files:
 ############################################################
 
 all: client
 
-client: client.o
+client: client_main.o client_mediator.o client_connections.o
 	$(LINKER) $(CXXFLAGS) $(LIBRARY_LINKAGE) -o $@ $^
 
-client.o: client_main.cc client_globals.hh
+client_main.o: client_main.cc client_globals.hh client_mediator.hh
 	$(CXX) $(CXXFLAGS) -o $@ -c client_main.cc
 
-#mazed: mazed_main.o mazed_server.o mazed_server_connection.o mazed_cl_handler.o
-#	$(LINKER) $(CXXFLAGS) $(LIBRARY_LINKAGE) -o $@ $^
-#
-#mazed_main.o: mazed_main.cc mazed_globals.hh
-#	$(CXX) $(CXXFLAGS) -o $@ -c mazed_main.cc
-#
-#mazed_server.o: mazed_server.cc mazed_server.hh mazed_globals.hh mazed_server_connection.hh
-#	$(CXX) $(CXXFLAGS) -o $@ -c mazed_server.cc
-#
-#mazed_server_connection.o: mazed_server_connection.cc mazed_server_connection.hh mazed_globals.hh mazed_cl_handler.hh
-#	$(CXX) $(CXXFLAGS) -o $@ -c mazed_server_connection.cc
-#
-#mazed_cl_handler.o: mazed_cl_handler.cc mazed_cl_handler.hh mazed_globals.hh ../connection.hh ../protocol.hh
-#	$(CXX) $(CXXFLAGS) -o $@ -c mazed_cl_handler.cc
-#	
-#client: client.cc
-#	g++ $(CXXFLAGS) -o $@ client.cc $(LIBRARY_LINKAGE)
-#
-#test: test.cc
-#	g++ $(CXXFLAGS) -o $@ $^ $(LIBRARY_LINKAGE)
-#
+client_mediator.o: client_mediator.cc client_mediator.hh client_globals.hh client_connections.hh
+	$(CXX) $(CXXFLAGS) -o $@ -c client_mediator.cc
+
+client_connections.o: client_connections.cc client_connections.hh abc_connection.hh client_globals.hh ../protocol.hh ../serialization.hh
+	$(CXX) $(CXXFLAGS) -o $@ -c client_connections.cc
+
 ############################################################
 # Other useful stuff:
 ############################################################
