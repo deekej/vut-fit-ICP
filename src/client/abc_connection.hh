@@ -64,7 +64,7 @@ namespace ABC {
 
     public:
       virtual bool connect() = 0;
-      virtual void disconnect() = 0;
+      virtual bool disconnect() = 0;
       virtual void async_send(const protocol::message &msg) = 0;
 
       // // // // // // // // // // //
@@ -84,15 +84,19 @@ namespace ABC {
       {{{
         resolver_.cancel();
 
+        timeout_out_.cancel();
+        timeout_in_.cancel();
+
         if (socket_.is_open() == true) {
-          socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both);
+          boost::system::error_code ignored_error;
+          socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignored_error);
           socket_.cancel();
           socket_.close();
         }
 
         io_service_.stop();
 
-        if ((*pu_asio_thread_).joinable() == true) {
+        if (pu_asio_thread_ && (*pu_asio_thread_).joinable() == true) {
           (*pu_asio_thread_).join();
         }
         

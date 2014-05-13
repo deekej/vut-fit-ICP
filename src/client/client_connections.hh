@@ -1,7 +1,7 @@
 /**
  * @file      client_connections.hh
  * @author    Dee'Kej (David Kaspar - xkaspa34)
- * @version   0.4
+ * @version   0.5
  * @brief     Implementations of TCP and UDP connections used by client.
  */
 
@@ -26,20 +26,23 @@
 
 namespace client {
   class tcp_connection : public ABC::connection {
+      std::unique_ptr<protocol::tcp_serialization>  pu_tcp_connect_;
+
       protocol::message                             &message_in_;
       boost::condition_variable                     &action_req_;
-      boost::mutex                                  &action_mutex_;
-      bool                                          new_message_flag_;
+      boost::mutex                                  &action_req_mutex_;
+      bool                                          &new_message_flag_;
 
       boost::barrier                                &init_barrier_;
       boost::mutex                                  output_mutex_;
-      protocol::message                             hello_packet_;
-
-      std::unique_ptr<protocol::tcp_serialization>  pu_tcp_connect_;
+      protocol::message                             HELLO_packet_;
+      protocol::message                             FIN_packet_;
 
       client::settings_tuple                        &settings_;
 
       // // // // // // // // // // //
+      
+      void connection_close();
 
       void communication_start();
       void handshake_send_handler(const boost::system::error_code &error);
@@ -59,15 +62,17 @@ namespace client {
 
       void async_send_handler(const boost::system::error_code &error);
 
+      // // // // // // // // // // //
+
       void asio_loops_start() override;
 
     public:
-      tcp_connection(const std::string &IP_address, const std::string &port, protocol::message msg_storage,
-                     boost::condition_variable &action_cond, boost::mutex &action_mutex, bool &flag,
-                     boost::barrier barrier, client::settings_tuple &settings);
       bool connect() override;
-      void disconnect() override;
+      bool disconnect() override;
       void async_send(const protocol::message &msg) override;
+      tcp_connection(client::settings_tuple &settings, protocol::message &msg_storage,
+                     boost::condition_variable &action_req, boost::mutex &action_req_mutex, bool &flag,
+                     boost::barrier &barrier);
   };
 }
 
