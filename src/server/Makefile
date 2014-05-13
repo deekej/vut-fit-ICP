@@ -53,7 +53,7 @@ test: test.cc
 .PHONY: run show kill clean clean-all
 
 run: all kill
-	@./mazed --logging 1 -t 4000
+	@./mazed --logging 1
 	@./show.sh "./mazed"
 
 show:
