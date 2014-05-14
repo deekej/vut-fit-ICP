@@ -23,6 +23,9 @@
 #include "client_globals.hh"
 #include "client_connections.hh"
 
+#include "abc_user_interface.hh"
+#include "client_interface_terminal.hh"
+
 
 /* ****************************************************************************************************************** *
  ~ ~~~[ MEDIATOR CLASS ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
@@ -37,22 +40,26 @@ namespace client {
    * processes.
    */
   class mediator {
-      client::tcp_connection            *p_tcp_connect_ {NULL};
-      // client::udp_connection            *p_udp_connect_ {NULL};
+      client::tcp_connection                      *p_tcp_connect_ {NULL};
+      // client::udp_connection                *p_udp_connect_ {NULL};
 
-      protocol::message                 message_in_;
-      protocol::message                 message_out_;
+      ABC::user_interface                         *p_interface_ {NULL};
+      enum ABC::user_interface::E_user_command    user_command_;
+      std::string                                 additional_data_;
 
-      boost::condition_variable         action_req_;
-      boost::mutex                      action_req_mutex_;
+      protocol::message                           message_in_;
+      protocol::message                           message_out_;
 
-      bool                              new_message_flag_ {false};
-      bool                              user_input_flag_ {false};
+      boost::condition_variable                   action_req_;
+      boost::mutex                                action_req_mutex_;
 
-      boost::barrier                    terminal_barrier_;
-      boost::barrier                    connection_barrier_;
+      bool                                        new_message_flag_ {false};
+      bool                                        run_ {true};
 
-      client::settings_tuple            &settings_;
+      boost::barrier                              interface_barrier_;
+      boost::barrier                              connection_barrier_;
+
+      client::settings_tuple                      &settings_;
 
     public:
       mediator(client::settings_tuple &settings);
