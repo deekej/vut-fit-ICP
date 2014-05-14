@@ -42,8 +42,6 @@ namespace client {
 
       // // // // // // // // // // //
       
-      void connection_close();
-
       void communication_start();
       void handshake_send_handler(const boost::system::error_code &error);
       void handshake_receive_handler(const boost::system::error_code &error);
