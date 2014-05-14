@@ -113,7 +113,7 @@ namespace client {
     }
     
     // Successful connection, starting & detaching a new thread for ASYNC operations:
-    pu_asio_thread_ = std::unique_ptr<boost::thread> (new boost::thread(&tcp_connection::communication_start, this));
+    pu_asio_thread_ = std::unique_ptr<boost::thread>(new boost::thread(&tcp_connection::communication_start, this));
     
     return true;
   }}}
@@ -159,8 +159,15 @@ namespace client {
     // We currently have a lock as a caller. We need to unlock to make sure the other thread doesn't get stuck waiting
     // for the lock, which it uses:
     action_req_mutex_.unlock();
-    (*pu_asio_thread_).join();          // Thread should be able to join successfully now.
+    {
+      // Join thread if it wasn't joined already:
+      if (pu_asio_thread_ && (*pu_asio_thread_).joinable() == true) {
+        (*pu_asio_thread_).join();
+        pu_asio_thread_ = NULL;           // Make sure we don't call .join() multiple times.
+      }
+    }
     action_req_mutex_.lock();           // Acquire the lock back.
+
     io_service_.reset();                // Prepare the io_service for possible next run.
 
     return true;
@@ -181,35 +188,6 @@ namespace client {
                                                               boost::asio::placeholders::error));
     }
     output_mutex_.unlock();
-
-    return;
-  }}}
-
-  // // // // // // // // // // // //
-
-  /**
-   * Closes the connection to server without sending a FIN message or makes sure the connection is closed properly after
-   * an error.
-   *
-   * @note  This is private function for closing connection for internal use only.
-   */
-  void tcp_connection::connection_close()
-  {{{
-    // Cancelling any ASYNC operations from now on:
-    timeout_out_.cancel();
-    timeout_in_.cancel();
-    
-    // Closing the connection if it is still opened:
-    if (socket_.is_open() == true) {
-      boost::system::error_code ignored_error;
-      socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignored_error);
-      socket_.cancel();
-      socket_.close();
-    }
-
-    io_service_.stop();                 // Making sure no more computation is done by thread.
-    (*pu_asio_thread_).join();          // Join the thread, there's no more need for it.
-    io_service_.reset();                // Prepare the io_service for possible next run.
 
     return;
   }}}
@@ -249,8 +227,6 @@ namespace client {
         action_req_.notify_one();
       }
       action_req_mutex_.unlock();
-
-      connection_close();
 
       return;
     }
@@ -310,8 +286,6 @@ namespace client {
       }
       action_req_mutex_.unlock();
 
-      connection_close();
-
       return;
     }
     // Testing the protocol again:
@@ -329,8 +303,6 @@ namespace client {
       }
       action_req_mutex_.unlock();
 
-      connection_close();
-
       return;
     }
     // Testing the server's answer to SYN request:
@@ -347,8 +319,6 @@ namespace client {
       }
       action_req_mutex_.unlock();
 
-      connection_close();
-       
       return;
     }
 
@@ -420,8 +390,6 @@ namespace client {
         }
         action_req_mutex_.unlock(); 
 
-        connection_close();
-
         return;
       
       // Different error - inform the client:
@@ -437,8 +405,6 @@ namespace client {
           action_req_.notify_one();
         }
         action_req_mutex_.unlock(); 
-
-        connection_close();
 
         return;
     }
@@ -503,8 +469,6 @@ namespace client {
         }
         action_req_mutex_.unlock(); 
 
-        connection_close();
-
         return;
     }
   }}}
@@ -542,8 +506,6 @@ namespace client {
         action_req_.notify_one();
       }
       action_req_mutex_.unlock();
-
-      connection_close();
 
       return;
     }
@@ -603,8 +565,6 @@ namespace client {
       }
       action_req_mutex_.unlock();
       
-      connection_close();
-
       return;
     }
     // Testing the message received - the protocol expects only one actual message from server:
@@ -632,11 +592,11 @@ namespace client {
       return;
     }
     // Do not bother the client with HELLO packets - we can handle them ourselves:
-    else if (message_in_.type == protocol::E_type::INFO && message_in_.info_type == protocol::E_info_type::HELLO) {
-
-      #ifndef NDEDUG
+    else if (messages_in_[0].type == protocol::E_type::INFO &&
+             messages_in_[0].info_type == protocol::E_info_type::HELLO) {
+            #ifndef NDEDUG
         //  Testing the protocol - for debugging purposes only:
-        if (message_in_.status != protocol::E_status::ACK) {
+        if (messages_in_[0].status != protocol::E_status::ACK) {
           action_req_mutex_.lock();
           {
             message_in_.type = protocol::E_type::ERROR;
