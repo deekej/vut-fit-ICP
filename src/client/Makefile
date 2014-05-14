@@ -13,28 +13,33 @@
 CXX=colorgcc
 LINKER=g++
 
-#BOOST_PATH=../boost
-LIBRARY_LINKAGE= -lboost_program_options -lboost_system -lboost_thread -lpthread -lboost_filesystem -lboost_serialization#-I $(BOOST_PATH)
-
 # Parameters of compilation.
 CXXFLAGS=-std=c++11 -pedantic -W -Wall -Wextra -g
 
+#BOOST_PATH=../boost
+LIBRARY_LINKAGE= -lboost_program_options -lboost_system -lboost_thread -lpthread -lboost_filesystem -lboost_serialization#-I $(BOOST_PATH)
+
+
+############################################################
 # Default rule for creating all required files:
 ############################################################
 
 all: client
 
-client: client_main.o client_mediator.o client_connections.o
+client: build/client_main.o build/client_mediator.o build/client_connections.o build/client_terminal_UI.o
 	$(LINKER) $(CXXFLAGS) $(LIBRARY_LINKAGE) -o $@ $^
 
-client_main.o: client_main.cc client_globals.hh client_mediator.hh
-	$(CXX) $(CXXFLAGS) -o $@ -c client_main.cc
+build/client_main.o: client_main.cc client_globals.hh client_mediator.hh
+	$(CXX) $(CXXFLAGS) -o $(BUILD_PATH)$@ -c client_main.cc
 
-client_mediator.o: client_mediator.cc client_mediator.hh client_globals.hh client_connections.hh
-	$(CXX) $(CXXFLAGS) -o $@ -c client_mediator.cc
+build/client_mediator.o: client_mediator.cc client_mediator.hh client_globals.hh client_connections.hh
+	$(CXX) $(CXXFLAGS) -o $(BUILD_PATH)$@ -c client_mediator.cc
 
-client_connections.o: client_connections.cc client_connections.hh abc_connection.hh client_globals.hh ../protocol.hh ../serialization.hh
-	$(CXX) $(CXXFLAGS) -o $@ -c client_connections.cc
+build/client_connections.o: client_connections.cc client_connections.hh abc_connection.hh client_globals.hh ../protocol.hh ../serialization.hh
+	$(CXX) $(CXXFLAGS) -o $(BUILD_PATH)$@ -c client_connections.cc
+
+build/client_terminal_UI.o:	client_interface_terminal.cc client_interface_terminal.hh abc_user_interface.hh
+	$(CXX) $(CXXFLAGS) -o $(BUILD_PATH)$@ -c client_interface_terminal.cc
 
 ############################################################
 # Other useful stuff:
@@ -48,7 +53,7 @@ run:
 # Remove object files generated during compiling.
 clean:
 	@echo "make[2]: Cleaning object files..."
-	@rm -f *.o
+	@rm -rf build/*
 
 clean-all: clean
 	@echo "make[2]: Cleaning executable files..."
