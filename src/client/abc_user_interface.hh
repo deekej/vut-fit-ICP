@@ -40,21 +40,28 @@ namespace ABC {
         RIGHT,
         UP,
         DOWN,
+        STOP,
         TAKE_OPEN,
         PAUSE_CONTINUE,
-        LIST_GAMES,
-        LIST_RUNNING_GAMES,
+        LIST_MAZES,
+        LIST_SAVES,
+        LIST_RUNNING,
         GAME_START,
         GAME_RESTART,
         GAME_TERMINATE,
         GAME_JOIN,
         GAME_LEAVE,
         GAME_LOAD_LAST,
-        GAME_LOAD_GAME,
+        GAME_LOAD,
         GAME_SAVE,
-        // GAME_SHOW_STATS,
+        GAME_SHOW_STATS,
         SET_NICK,
+        EXIT,
+        HELP,
+        ERROR_INPUT_STREAM,
       };
+
+    static const std::size_t                    USER_COMMANDS_SIZE {24};
 
     protected:
       boost::condition_variable                 &action_req_;
@@ -67,13 +74,15 @@ namespace ABC {
       // // // // // // // // // // //
 
     public:
-      virtual void start() = 0;
-      virtual void display(std::string &message) = 0;
-      virtual void stop() = 0;
+      virtual void initialize() = 0;
+      virtual void display_message(const std::string &message) = 0;
+      virtual void start_maze() = 0;
+      virtual void stop_maze() = 0;
+      virtual void terminate() = 0;
 
       // // // // // // // // // // //
 
-      user_interface(boost::condition_variable &action_req, boost::mutex &action_req_mutex, boost::barrier barrier,
+      user_interface(boost::condition_variable &action_req, boost::mutex &action_req_mutex, boost::barrier &barrier,
                      enum E_user_command &command_storage, std::string &additional_data_storage) :
         action_req_{action_req}, action_req_mutex_{action_req_mutex}, init_barrier_{barrier},
         command_{command_storage}, additional_data_{additional_data_storage}
