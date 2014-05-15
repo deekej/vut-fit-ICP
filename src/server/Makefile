@@ -24,27 +24,21 @@ CXXFLAGS=-std=c++11 -pedantic -W -Wall -Wextra -O3
 
 all: mazed
 
-mazed: mazed_main.o mazed_server.o mazed_server_connection.o mazed_cl_handler.o
+mazed: build/mazed_main.o build/mazed_server.o build/mazed_server_connection.o build/mazed_cl_handler.o
 	$(LINKER) $(CXXFLAGS) $(LIBRARY_LINKAGE) -o $@ $^
 
-mazed_main.o: mazed_main.cc mazed_globals.hh
+build/mazed_main.o: mazed_main.cc mazed_globals.hh
 	$(CXX) $(CXXFLAGS) -o $@ -c mazed_main.cc
 
-mazed_server.o: mazed_server.cc mazed_server.hh mazed_globals.hh mazed_server_connection.hh
+build/mazed_server.o: mazed_server.cc mazed_server.hh mazed_globals.hh mazed_server_connection.hh
 	$(CXX) $(CXXFLAGS) -o $@ -c mazed_server.cc
 
-mazed_server_connection.o: mazed_server_connection.cc mazed_server_connection.hh mazed_globals.hh mazed_cl_handler.hh
+build/mazed_server_connection.o: mazed_server_connection.cc mazed_server_connection.hh mazed_globals.hh mazed_cl_handler.hh
 	$(CXX) $(CXXFLAGS) -o $@ -c mazed_server_connection.cc
 
-mazed_cl_handler.o: mazed_cl_handler.cc mazed_cl_handler.hh mazed_globals.hh ../serialization.hh ../protocol.hh
+build/mazed_cl_handler.o: mazed_cl_handler.cc mazed_cl_handler.hh mazed_globals.hh ../serialization.hh ../protocol.hh
 	$(CXX) $(CXXFLAGS) -o $@ -c mazed_cl_handler.cc
 	
-client: client.cc
-	g++ $(CXXFLAGS) -o $@ client.cc $(LIBRARY_LINKAGE)
-
-test: test.cc
-	g++ $(CXXFLAGS) -o $@ $^ $(LIBRARY_LINKAGE)
-
 ############################################################
 # Other useful stuff:
 ############################################################
@@ -65,7 +59,7 @@ kill:
 # Remove object files generated during compiling.
 clean:
 	@echo "make[2]: Removing object files"
-	@rm -f *.o
+	@rm -rf build/*.o
 
 clean-all: clean
 	@echo "make[2]: Removing executable files"
