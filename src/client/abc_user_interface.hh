@@ -57,6 +57,7 @@ namespace ABC {
         GAME_SHOW_STATS,
         SET_NICK,
         EXIT,
+        TERMINATE,
         HELP,
         ERROR_INPUT_STREAM,
       };

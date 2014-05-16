@@ -33,13 +33,9 @@ namespace client {
     "|-** Write 'help' to see available commands or 'quit' / 'exit' to end the program."
   };
 
-  const std::string terminal_interface::exit_message_ {
-    "|->> OK, bye!"
-  };
+  const std::string terminal_interface::exit_message_ {"|->> OK, bye!"};
 
-  const std::string terminal_interface::help_start_string_ {
-    "   Available commands:"
-  };
+  const std::string terminal_interface::help_start_string_ {"   Available commands:"};
 
   const std::string terminal_interface::help_end_string_ {
     "   NOTE: In case program gets stuck you can press 'CTRL^C' to end it."
@@ -47,6 +43,9 @@ namespace client {
 
   const std::string terminal_interface::prompt_ {"|-?? "};
   const std::string terminal_interface::prompt_reply_ {"|->> "};
+
+  // Magic string for termination of the program without any exit message, used for internal purposes:
+  const std::string terminal_interface::terminate_string_ {"t3Rm1N4T3:42!"};
 
   const std::multimap<std::string, enum ABC::user_interface::E_user_command> terminal_interface::mappings_ {
     {"left", E_user_command::LEFT},
@@ -74,6 +73,7 @@ namespace client {
     {"set-nick", E_user_command::SET_NICK},
     {"quit", E_user_command::EXIT},
     {"exit", E_user_command::EXIT},
+    {terminate_string_, E_user_command::TERMINATE},
     {"help", E_user_command::HELP},
   };
 
@@ -130,6 +130,9 @@ namespace client {
     }
     run_mutex_.unlock_upgrade();
   
+    // Notify the input thread to terminate - it is in blocking read:
+    fwrite(terminate_string_.data(), sizeof(char), terminate_string_.size(), stdin);
+
     // Notify the output thread:
     output_req_.notify_one();
     
@@ -172,10 +175,12 @@ namespace client {
     }
     run_mutex_.unlock_upgrade();
 
+    // Notify the input thread to terminate - it is in blocking read:
+    fwrite(terminate_string_.data(), sizeof(char), terminate_string_.size(), stdin);
+
     // Notify the output thread:
     output_req_.notify_one();
 
-      
     // Thread should be able to successfully join right now:
     if (pu_input_thread_ && (*pu_input_thread_).joinable() == true) {
       (*pu_input_thread_).join();
@@ -248,6 +253,11 @@ namespace client {
           case HELP :
             display_help();
             print_prompt = true;
+            continue;
+          
+          // The request for terminating this thread was made:
+          case TERMINATE :
+            run = false;
             continue;
           
           case EXIT :
