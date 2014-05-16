@@ -1,7 +1,7 @@
 /**
  * @file      client_interface_terminal.hh
  * @author    Dee'Kej (David Kaspar - xkaspa34)
- * @version   0.5
+ * @version   0.6
  * @brief     This file contains specialized (derived) class of ABC::user_interface for simple terminal UI.
  */
 
@@ -54,6 +54,7 @@ namespace client {
       std::string                                       user_input_;
       
       static const std::string                          welcome_message_;
+      static const std::string                          exit_message_;
       static const std::string                          help_start_string_;
       static const std::string                          help_end_string_;
       static const std::string                          prompt_;

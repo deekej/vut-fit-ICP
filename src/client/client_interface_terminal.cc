@@ -1,7 +1,7 @@
 /**
  * @file      client_interface_terminal.cc
  * @author    Dee'Kej (David Kaspar - xkaspa34)
- * @version   0.5
+ * @version   0.6
  * @brief     This file contains implementations of the member functions of the client::terminal_interface class.
  */
 
@@ -33,12 +33,16 @@ namespace client {
     "|-** Write 'help' to see available commands or 'quit' / 'exit' to end the program."
   };
 
+  const std::string terminal_interface::exit_message_ {
+    "|->> OK, bye!"
+  };
+
   const std::string terminal_interface::help_start_string_ {
     "   Available commands:"
   };
 
   const std::string terminal_interface::help_end_string_ {
-    "   NOTE: In case program gets stuck you can press 'CTRL+C' to end it."
+    "   NOTE: In case program gets stuck you can press 'CTRL^C' to end it."
   };
 
   const std::string terminal_interface::prompt_ {"|-?? "};
@@ -75,7 +79,7 @@ namespace client {
 
   const std::map<std::size_t, std::pair<std::string, std::string>> terminal_interface::help_lobby_commands_ {
     {0, {"help", "display this help page"}},
-    {1, {"quit/exit", "exit the program (same as pressing CTRL+C)"}},
+    {1, {"quit/exit", "exit the program (same as pressing 'CTRL^C')"}},
     {2, {"list-mazes", "display available mazes to play from start"}},
     {3, {"list-saves", "display available saved instances to play"}},
     {4, {"list-running", "display all running game instances on the server"}},
@@ -158,7 +162,7 @@ namespace client {
 
   
   /**
-   * Terminates the output and input thread, allowing another subsequent call of initialize:
+   * Terminates the output and input thread, allowing another subsequent call of initialize.
    */
   void terminal_interface::terminate()
   {{{
@@ -189,7 +193,7 @@ namespace client {
   // // // // // // // // // // // //
 
   /**
-   * Starts a input thread for processing user's commands.
+   * Runs an input thread for processing user's commands.
    */
   void terminal_interface::input_thread()
   {{{
@@ -198,7 +202,7 @@ namespace client {
     
 
     bool run {true};
-    bool print_prompt {true};           // Switch for making output prettier.
+    bool print_prompt {false};          // Switch for making output prettier.
 
     std::string input;                  // String to be read into.
     enum E_user_command last_command;   // Auxiliary variable for extracting user's command.
@@ -221,6 +225,7 @@ namespace client {
         run = false;
       }
       else if (input == "\n") {
+        print_prompt = true;
         continue;                       // Simple ENTER pressed, nothing to do.
       }
       else if (input.length() == 0) {
@@ -231,6 +236,7 @@ namespace client {
         }
         output_mutex_.unlock();
 
+        print_prompt = true;
         continue;
       }
       else if (mappings_.count(input)) {
@@ -241,10 +247,21 @@ namespace client {
         switch (last_command) {
           case HELP :
             display_help();
-            break;
+            print_prompt = true;
+            continue;
           
           case EXIT :
+            output_mutex_.lock();
+            {
+              std::cout << exit_message_ << std::endl;
+            }
+            output_mutex_.unlock();
+
             run = false;
+            break;
+
+          case STOP :
+            print_prompt = false;
             break;
           
           // Commands which require additional argument:
@@ -259,9 +276,12 @@ namespace client {
               run = false;
               continue;
             }
+            
+            print_prompt = true;
             break;
           
           default :
+            print_prompt = true;
             break;
         }
 
@@ -275,12 +295,8 @@ namespace client {
         action_req_mutex_.unlock();
       }
       else {
-        output_mutex_.lock();
-        {
-          std::cout << prompt_reply_ << "Error: Unknown command '" << input << "'\n";
-          std::cout << prompt_reply_ << "(Write 'help' to see available commands)" << std::endl;
-        }
-        output_mutex_.unlock();
+        display_message("Error: Unknown command '" + input + "' (write 'help' to see available commands)");
+        print_prompt = false;
       }
 
     } while (run == true);
@@ -290,21 +306,17 @@ namespace client {
 
 
   /**
-   * Starts a output thread for displaying messages to user.
+   * Runs an output thread for displaying messages to user.
    */
   void terminal_interface::output_thread()
   {{{
     // Acquire the lock as a first one and wait for other thread:
     boost::unique_lock<boost::mutex> output_lock(output_mutex_);
     output_barrier_.wait();
-
-    run_mutex_.lock();
-    while (run_ == true) {
+    
+    // run_mutex_.lock();                  // NOTE: Enable again in case of any deadlock!
+    do {
       run_mutex_.unlock();
-
-      output_req_.wait(output_lock);
-
-      std::cout << "\n";
       
       // Print all of the queue contents, if any, as one output:
       while (output_queue_.empty() != true) {
@@ -314,8 +326,10 @@ namespace client {
 
       std::cout << prompt_ << std::flush;
 
+      output_req_.wait(output_lock);    // Wait for next request.
+
       run_mutex_.lock();
-    }
+    } while (run_ == true);
     run_mutex_.unlock();
 
     return;
@@ -331,17 +345,15 @@ namespace client {
    */
   std::string terminal_interface::get_word()
   {{{
-    int ch;
-
     user_input_.clear();
-    
+
+    int ch;
 
     // Skip the initial whitespace characters except the '\n' which indicates just simple pressing of ENTER key:
     while ((ch = std::cin.get()) != EOF && ch != '\n' && std::isspace(static_cast<char>(ch))) {
       ;
     }
 
-    
     if (ch == '\n') {
       return "\n";
     }
@@ -354,16 +366,13 @@ namespace client {
       return user_input_;               // Empty string.
     }
 
-    
     // Last key wasn't ENTER, store it and read characters until whitespace character occurs:
     do {
       user_input_.push_back(ch);
       ch = std::cin.get();
     } while (std::isspace(static_cast<char>(ch)) == false);
-    
 
     std::cin.clear();                   // We're ignoring the eofbit and failbit.
-
     return user_input_;
   }}}
   
