@@ -49,7 +49,9 @@ namespace client {
       boost::condition_variable                         output_req_;
       boost::mutex                                      output_mutex_;
       boost::barrier                                    output_barrier_;
+      std::string                                       output_string_;
       std::queue<std::string>                           output_queue_;
+      bool                                              print_newline_ {true};
 
       std::string                                       user_input_;
       

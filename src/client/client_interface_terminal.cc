@@ -30,7 +30,7 @@ namespace client {
   // Static strings of the terminal_interface class:
   const std::string terminal_interface::welcome_message_ {
     "|-** Welcome to MAZE-game!\n"
-    "|-** Write 'help' to see available commands or 'quit' / 'exit' to end the program."
+    "|-** Write 'help' to see available commands or write 'quit' or 'exit' to end the program."
   };
 
   const std::string terminal_interface::exit_message_ {"|->> OK, bye!"};
@@ -218,12 +218,17 @@ namespace client {
       if (print_prompt == true) {
         output_mutex_.lock();
         {
-          std::cout << prompt_ << std::flush;
+          if (output_queue_.empty() == true) {
+            std::cout << prompt_ << std::flush;
+            print_newline_ = true;
+          }
         }
         output_mutex_.unlock();
       }
 
+
       input = get_word();               // Read one word from std::cin.
+
 
       if (std::cin.bad() == true) {
         report_istream_error();         // Error occurred, bail out.
@@ -233,8 +238,8 @@ namespace client {
         print_prompt = true;
         continue;                       // Simple ENTER pressed, nothing to do.
       }
+      // CTRL+D was pressed, making output consistent (read prettier ^_^):
       else if (input.length() == 0) {
-        // CTRL+D was pressed, making output consistent (read prettier ^_^):
         output_mutex_.lock();
         {
           std::cout << std::endl;
@@ -244,8 +249,8 @@ namespace client {
         print_prompt = true;
         continue;
       }
+      // Command is known, getting the associated enumerate value:
       else if (mappings_.count(input)) {
-        // Command is known, getting the associated enumerate value:
         last_command = mappings_.find(input)->second;
         input.clear();                  // Prepare for next reading.
 
@@ -268,10 +273,12 @@ namespace client {
             output_mutex_.unlock();
 
             run = false;
+            print_newline_ = false;
             break;
 
           case STOP :
             print_prompt = false;
+            print_newline_ = false;
             break;
           
           // Commands which require additional argument:
@@ -307,7 +314,9 @@ namespace client {
       else {
         display_message("Error: Unknown command '" + input + "' (write 'help' to see available commands)");
         print_prompt = false;
+        print_newline_ = false;
       }
+
 
     } while (run == true);
 
@@ -324,19 +333,27 @@ namespace client {
     boost::unique_lock<boost::mutex> output_lock(output_mutex_);
     output_barrier_.wait();
     
-    // run_mutex_.lock();                  // NOTE: Enable again in case of any deadlock!
+    // run_mutex_.lock();                         // NOTE: Enable again in case of any deadlock!
     do {
       run_mutex_.unlock();
       
+      std::cout << prompt_ << std::flush;
+      
+      output_req_.wait(output_lock);              // Wait for next request.
+
+      if (print_newline_ == true) {
+        std::cout << "\n";
+      }
+
       // Print all of the queue contents, if any, as one output:
       while (output_queue_.empty() != true) {
         std::cout << prompt_reply_ << output_queue_.front() << "\n";
         output_queue_.pop();
       }
 
-      std::cout << prompt_ << std::flush;
+      std::cout << std::flush;
 
-      output_req_.wait(output_lock);    // Wait for next request.
+      print_newline_ = true;
 
       run_mutex_.lock();
     } while (run_ == true);
@@ -415,12 +432,9 @@ namespace client {
     output_mutex_.lock();
     {
       output_queue_.push(message);
+      output_req_.notify_one();
     }
     output_mutex_.unlock();
-
-    // We're notifying the output thread after the unlock, so other threads can also store into the queue, allowing less
-    // wake ups of output thread.
-    output_req_.notify_one();
 
     return;
   }}}
