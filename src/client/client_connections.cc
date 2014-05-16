@@ -52,7 +52,7 @@ namespace client {
     messages_out_[0].status = protocol::E_status::QUERY;
 
     // Make sure we have enough memory to create 2 possible error messages:
-    message_in_.data.reserve(2);
+    message_in_.data.resize(2);
 
     // Prepare HELLO packet for fast sending:
     HELLO_packet_.type = protocol::E_type::INFO;
@@ -91,9 +91,22 @@ namespace client {
 
     boost::system::error_code error;
 
+    it_endpoint_ = resolver_.resolve(query_, error);
+
+    if (error) {
+      message_in_.type = protocol::E_type::ERROR;
+      message_in_.error_type = protocol::E_error_type::CONNECTION_FAILED;
+      message_in_.status = protocol::E_status::LOCAL;
+      message_in_.data[0] = error.message();
+      message_in_.data[1] = "(NOTE: Are both the IP address and server port correct?)";
+
+      return false;
+    }
+
+    endpoint_ = *it_endpoint_;
     socket_.connect(endpoint_, error);
     
-    // Try other endpoints if they exist:
+    // Try other endpoints if they exist and error has occurred:
     while (error && ++it_endpoint_ != boost::asio::ip::tcp::resolver::iterator()) {
       socket_.close();
       endpoint_ = *it_endpoint_;
@@ -107,7 +120,7 @@ namespace client {
       message_in_.error_type = protocol::E_error_type::CONNECTION_FAILED;
       message_in_.status = protocol::E_status::LOCAL;
       message_in_.data[0] = error.message();
-      message_in_.data[1] = "(NOTE:) Are the IP address and port correct?";
+      message_in_.data[1] = "(NOTE: Are both the IP address and server port correct?)";
 
       return false;
     }

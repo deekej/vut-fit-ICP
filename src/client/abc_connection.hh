@@ -73,9 +73,6 @@ namespace ABC {
         socket_(io_service_), resolver_(io_service_), query_(IP_address, port),
         timeout_in_(io_service_), timeout_out_(io_service_)
       {{{
-        // Shared initialization:
-        it_endpoint_ = resolver_.resolve(query_);
-        endpoint_ = *it_endpoint_;
         messages_out_.resize(1);    // Avoiding segmentation fault.
         return;
       }}}
