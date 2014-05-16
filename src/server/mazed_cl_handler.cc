@@ -125,7 +125,7 @@ namespace mazed {
         case CTRL :
           // NOTE: Making sure no one slips us the message that can cause STACK OVERFLOW:
           if (message_in_.ctrl_type >= 0 && message_in_.ctrl_type < E_CTRL_TYPE_SIZE) {
-            (this->*ctrl_message_handlers[message_in_.ctrl_type])();
+            (this->*ctrl_message_handlers_[message_in_.ctrl_type])();
           }
           else {
             message_prepare(ERROR, WRONG_PROTOCOL, UPDATE);
