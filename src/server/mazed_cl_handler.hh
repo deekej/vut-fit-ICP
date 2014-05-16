@@ -82,7 +82,7 @@ namespace mazed {
       using pf_message_handler = void (client_handler::*)();
       
       // Array of pointers to message function handlers:
-      pf_message_handler                ctrl_message_handlers[13] {
+      pf_message_handler                ctrl_message_handlers_[E_CTRL_TYPE_SIZE] {
         &client_handler::SYN_handler,
         &client_handler::FIN_handler,
         &client_handler::LOGIN_OR_CREATE_USER_handler,
