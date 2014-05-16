@@ -139,7 +139,7 @@ namespace protocol {
     TERMINATE_GAME,
   };
 
-  #define E_CTRL_TYPE_SIZE 13U    // Used as control mechanism against enum overflow. Always update!
+  #define E_CTRL_TYPE_SIZE 13U    // Used as a control mechanism against enum overflow. Always update!
 
   enum E_info_type {
     HELLO = 0,
@@ -154,6 +154,8 @@ namespace protocol {
     GAME_TERMINATED,
   };
 
+  #define E_INFO_TYPE_SIZE 10U    // Used as a control mechanism against enum overflow. Always update!
+
   enum E_error_type {
     WRONG_PROTOCOL = 0,
     EMPTY_MESSAGE,
@@ -167,6 +169,8 @@ namespace protocol {
     ALREADY_PLAYED,
     UNKNOWN_ERROR,
   };
+
+  #define E_ERROR_TYPE_SIZE 10U   // Used as a control mechanism against enum overflow. Always update!
 
   enum E_status {
     ACK = 0,
