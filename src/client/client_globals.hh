@@ -60,6 +60,7 @@ namespace client {
     E_OPEN,
     E_WRITE,
     E_CONNECT_FAILED,
+    E_WRONG_PROTOCOL,
     E_UNKNOWN_EXCEPT,
   };
 }

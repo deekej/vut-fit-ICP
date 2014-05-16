@@ -144,9 +144,11 @@ int main(int argc, char *argv[])
 
   // // // // // // // // //
   
-  client::mediator mediator(SETTINGS);
+  client::mediator *p_mediator = new client::mediator(SETTINGS);
+  client::exit_codes retval = p_mediator->run();
+  delete p_mediator;
 
-  return mediator.run();
+  return retval;
 }}}
 
 /* ****************************************************************************************************************** *
