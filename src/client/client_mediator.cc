@@ -211,20 +211,14 @@ namespace client {
   void mediator::display_message_error()
   {{{
     assert(p_interface_ != NULL);
-
-    std::string type;
-    
-    // Setting the right format:
-    if (message_in_.status == protocol::E_status::LOCAL) {
-      type = "ERROR: ";
-    }
-    else {
-      type = "Server ERROR: ";
-    }
     
     // There might be more than one error message:
-    for (auto msg : message_in_.data) {
-      p_interface_->display_message(type + msg);
+    for (auto error_msg : message_in_.data) {
+      if (error_msg.length() == 0 || error_msg == "") {
+        continue;
+      }
+
+      p_interface_->display_message("ERROR: " + error_msg);
     }
 
     return;
