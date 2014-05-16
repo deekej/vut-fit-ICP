@@ -87,8 +87,9 @@ namespace mazed {
         &client_handler::FIN_handler,
         &client_handler::LOGIN_OR_CREATE_USER_handler,
         &client_handler::SET_NICK_handler,
+        &client_handler::LIST_MAZES_handler,
+        &client_handler::LIST_RUNNING_handler,
         &client_handler::LIST_SAVES_handler,
-        &client_handler::LIST_GAMES_handler,
         &client_handler::CREATE_GAME_handler,
         &client_handler::LOAD_GAME_handler,
         &client_handler::SAVE_GAME_handler,
@@ -143,8 +144,9 @@ namespace mazed {
       void FIN_handler();
       void LOGIN_OR_CREATE_USER_handler();
       void SET_NICK_handler();
+      void LIST_MAZES_handler();
+      void LIST_RUNNING_handler();
       void LIST_SAVES_handler();
-      void LIST_GAMES_handler();
       void CREATE_GAME_handler();
       void LOAD_GAME_handler();
       void SAVE_GAME_handler();
