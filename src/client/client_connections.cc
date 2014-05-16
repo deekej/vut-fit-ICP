@@ -107,7 +107,7 @@ namespace client {
       message_in_.error_type = protocol::E_error_type::CONNECTION_FAILED;
       message_in_.status = protocol::E_status::LOCAL;
       message_in_.data[0] = error.message();
-      message_in_.data[1] = "Hint: Are the IP address and port correct?";
+      message_in_.data[1] = "(NOTE:) Are the IP address and port correct?";
 
       return false;
     }
