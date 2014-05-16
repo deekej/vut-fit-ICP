@@ -40,8 +40,6 @@ namespace client {
    * Class for creating and running the TERMINAL interface.
    */
   class terminal_interface : public ABC::user_interface {
-      boost::asio::io_service                           io_service_;
-      boost::asio::deadline_timer                       input_timer_;
       std::unique_ptr<boost::thread>                    pu_input_thread_;
       std::unique_ptr<boost::thread>                    pu_output_thread_;
       
