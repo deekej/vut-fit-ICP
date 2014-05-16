@@ -584,13 +584,19 @@ namespace mazed {
   }}}
 
 
-  void client_handler::LIST_SAVES_handler()
+  void client_handler::LIST_MAZES_handler()
   {{{
     return;
   }}}
 
 
-  void client_handler::LIST_GAMES_handler()
+  void client_handler::LIST_RUNNING_handler()
+  {{{
+    return;
+  }}}
+
+
+  void client_handler::LIST_SAVES_handler()
   {{{
     return;
   }}}
