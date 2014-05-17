@@ -21,15 +21,21 @@
 #include <tuple>
 #include <string>
 
+#include <boost/filesystem/path.hpp>
+
+
 /* ****************************************************************************************************************** *
  ~ ~~~[ DECLARATIONS/DEFINITIONS ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
  * ****************************************************************************************************************** */
 
 namespace mazed {
   enum E_settings {
-    PLAYERS_FOLDER = 0,
+    DAEMON_FOLDER = 0,
+    PLAYERS_FOLDER,
     SAVES_FOLDER,
+    SAVES_EXTENSION,
     MAZES_FOLDER,
+    MAZES_EXTENSION,
     LOG_FOLDER,
     SERVER_LOG_FILE,
     SLEEP_INTERVAL,
@@ -46,15 +52,18 @@ namespace mazed {
   };
 
   using settings_tuple = std::tuple<
-    std::string,        // PLAYERS_FOLDER
-    std::string,        // SAVES_FOLDER
-    std::string,        // MAZES_FOLDER
-    std::string,        // LOG_FOLDER
-    std::string,        // SERVER_LOG_FILE
-    long,               // SLEEP_INTERVAL
-    long,               // MAX_PING
-    unsigned short,     // SERVER_PORT
-    log_level           // LOGGING
+    boost::filesystem::path,            // DAEMON_FOLDER
+    std::string,                        // PLAYERS_FOLDER
+    std::string,                        // SAVES_FOLDER
+    std::string,                        // SAVES_EXTENSION
+    std::string,                        // MAZES_FOLDER
+    std::string,                        // MAZES_EXTENSION
+    std::string,                        // LOG_FOLDER
+    std::string,                        // SERVER_LOG_FILE
+    long,                               // SLEEP_INTERVAL
+    long,                               // MAX_PING
+    unsigned short,                     // SERVER_PORT
+    log_level                           // LOGGING
   >;
  
   namespace exit_codes {

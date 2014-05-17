@@ -30,7 +30,7 @@
 /* ****************************************************************************************************************** *
  ~ ~~~[ MEDIATOR CLASS ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
  * ****************************************************************************************************************** */
-using command = ABC::user_interface::E_user_command;
+using command_t = ABC::user_interface::E_user_command;
 
 namespace client {
 
@@ -55,14 +55,17 @@ namespace client {
       boost::barrier                              interface_barrier_;
       boost::barrier                              connection_barrier_;
 
-      client::settings_tuple                      &settings_;
-
-      command                                     user_command_ {command::NONE};
+      command_t                                   user_command_ {command_t::NONE};
       std::string                                 additional_data_;
+
+      client::settings_tuple                      &settings_;
       client::exit_codes                          retval_ {exit_codes::NO_ERROR};
 
       bool                                        new_message_flag_ {false};
       bool                                        run_ {true};
+
+      std::vector<std::string>                    available_mazes_;
+      std::vector<std::string>                    available_saves_;
 
       // // // // // // // // // // //
 
@@ -99,22 +102,40 @@ namespace client {
         &mediator::CMD_ERROR_INPUT_STREAM_handler,
       };
 
+      pf_input_handler                            ctrl_message_handlers_[E_CTRL_TYPE_SIZE] {
+        &mediator::CTRL_MSG_SYN_handler,
+        &mediator::CTRL_MSG_FIN_handler,
+        &mediator::CTRL_MSG_LOGIN_OR_CREATE_USER_handler,
+        &mediator::CTRL_MSG_SET_NICK_handler,
+        &mediator::CTRL_MSG_LIST_MAZES_handler,
+        &mediator::CTRL_MSG_LIST_RUNNING_handler,
+        &mediator::CTRL_MSG_LIST_SAVES_handler,
+        &mediator::CTRL_MSG_CREATE_GAME_handler,
+        &mediator::CTRL_MSG_LOAD_GAME_handler,
+        &mediator::CTRL_MSG_SAVE_GAME_handler,
+        &mediator::CTRL_MSG_JOIN_GAME_handler,
+        &mediator::CTRL_MSG_LEAVE_GAME_handler,
+        &mediator::CTRL_MSG_RESTART_GAME_handler,
+        &mediator::CTRL_MSG_TERMINATE_GAME_handler,
+      };
+
       pf_input_handler                            info_message_handlers_[E_INFO_TYPE_SIZE]{
-        &mediator::MSG_HELLO_handler,
-        &mediator::MSG_LOAD_DATA_handler,
-        &mediator::MSG_GAMEs_DATA_handler,
-        &mediator::MSG_PLAYER_JOINED_handler,
-        &mediator::MSG_PLAYER_LEFT_handler,
-        &mediator::MSG_PLAYER_TIMEOUT_handler,
-        &mediator::MSG_PLAYER_KILLED_handler,
-        &mediator::MSG_PLAYER_GAME_OVER_handler,
-        &mediator::MSG_PLAYER_WIN_handler,
-        &mediator::MSG_GAME_RESTARTED_handler,
-        &mediator::MSG_GAME_TERMINATED_handler,
+        &mediator::INFO_MSG_HELLO_handler,
+        &mediator::INFO_MSG_LOAD_DATA_handler,
+        &mediator::INFO_MSG_GAMEs_DATA_handler,
+        &mediator::INFO_MSG_PLAYER_JOINED_handler,
+        &mediator::INFO_MSG_PLAYER_LEFT_handler,
+        &mediator::INFO_MSG_PLAYER_TIMEOUT_handler,
+        &mediator::INFO_MSG_PLAYER_KILLED_handler,
+        &mediator::INFO_MSG_PLAYER_GAME_OVER_handler,
+        &mediator::INFO_MSG_PLAYER_WIN_handler,
+        &mediator::INFO_MSG_GAME_RESTARTED_handler,
+        &mediator::INFO_MSG_GAME_TERMINATED_handler,
       };
 
       // // // // // // // // // // //
 
+      inline void message_send();
       inline void message_prepare(protocol::E_type type, protocol::E_ctrl_type ctrl_type, protocol::E_status status,
                                   std::vector<std::string> data = {""});
       // inline void message_prepare(protocol::E_type type, protocol::E_info_type info_type, protocol::E_status status,
@@ -165,17 +186,34 @@ namespace client {
 
       // // // // // // // // // // //
 
-      void MSG_HELLO_handler();
-      void MSG_LOAD_DATA_handler();
-      void MSG_GAMEs_DATA_handler();
-      void MSG_PLAYER_JOINED_handler();
-      void MSG_PLAYER_LEFT_handler();
-      void MSG_PLAYER_TIMEOUT_handler();
-      void MSG_PLAYER_KILLED_handler();
-      void MSG_PLAYER_GAME_OVER_handler();
-      void MSG_PLAYER_WIN_handler();
-      void MSG_GAME_RESTARTED_handler();
-      void MSG_GAME_TERMINATED_handler();
+      void CTRL_MSG_SYN_handler();
+      void CTRL_MSG_FIN_handler();
+      void CTRL_MSG_LOGIN_OR_CREATE_USER_handler();
+      void CTRL_MSG_SET_NICK_handler();
+      void CTRL_MSG_LIST_MAZES_handler();
+      void CTRL_MSG_LIST_RUNNING_handler();
+      void CTRL_MSG_LIST_SAVES_handler();
+      void CTRL_MSG_CREATE_GAME_handler();
+      void CTRL_MSG_LOAD_GAME_handler();
+      void CTRL_MSG_SAVE_GAME_handler();
+      void CTRL_MSG_JOIN_GAME_handler();
+      void CTRL_MSG_LEAVE_GAME_handler();
+      void CTRL_MSG_RESTART_GAME_handler();
+      void CTRL_MSG_TERMINATE_GAME_handler();
+
+      // // // // // // // // // // //
+
+      void INFO_MSG_HELLO_handler();
+      void INFO_MSG_LOAD_DATA_handler();
+      void INFO_MSG_GAMEs_DATA_handler();
+      void INFO_MSG_PLAYER_JOINED_handler();
+      void INFO_MSG_PLAYER_LEFT_handler();
+      void INFO_MSG_PLAYER_TIMEOUT_handler();
+      void INFO_MSG_PLAYER_KILLED_handler();
+      void INFO_MSG_PLAYER_GAME_OVER_handler();
+      void INFO_MSG_PLAYER_WIN_handler();
+      void INFO_MSG_GAME_RESTARTED_handler();
+      void INFO_MSG_GAME_TERMINATED_handler();
 
     public:
       mediator(client::settings_tuple &settings);
