@@ -17,28 +17,31 @@ LINKER=g++
 LIBRARY_LINKAGE= -lboost_program_options -lboost_system -lboost_thread -lpthread -lboost_filesystem -lboost_serialization#-I $(BOOST_PATH)
 
 # Parameters of compilation.
-CXXFLAGS=-std=c++11 -pedantic -W -Wall -Wextra -O3
+CXXFLAGS=-std=c++11 -pedantic -W -Wall -Wextra -g
 
 # Default rule for creating all required files:
 ############################################################
 
 all: mazed
 
-mazed: build/mazed_main.o build/mazed_server.o build/mazed_server_connection.o build/mazed_cl_handler.o
+mazed: build/mazed_main.o build/mazed_server.o build/mazed_server_connection.o build/mazed_cl_handler.o build/mazed_mazes_manager.o
 	$(LINKER) $(CXXFLAGS) $(LIBRARY_LINKAGE) -o $@ $^
 
 build/mazed_main.o: mazed_main.cc mazed_globals.hh
 	$(CXX) $(CXXFLAGS) -o $@ -c mazed_main.cc
 
-build/mazed_server.o: mazed_server.cc mazed_server.hh mazed_globals.hh mazed_server_connection.hh
+build/mazed_server.o: mazed_server.cc mazed_server.hh mazed_globals.hh mazed_shared_resources.hh mazed_server_connection.hh
 	$(CXX) $(CXXFLAGS) -o $@ -c mazed_server.cc
 
 build/mazed_server_connection.o: mazed_server_connection.cc mazed_server_connection.hh mazed_globals.hh mazed_cl_handler.hh
 	$(CXX) $(CXXFLAGS) -o $@ -c mazed_server_connection.cc
 
-build/mazed_cl_handler.o: mazed_cl_handler.cc mazed_cl_handler.hh mazed_globals.hh ../serialization.hh ../protocol.hh
+build/mazed_cl_handler.o: mazed_cl_handler.cc mazed_cl_handler.hh mazed_globals.hh mazed_shared_resources.hh ../serialization.hh ../protocol.hh
 	$(CXX) $(CXXFLAGS) -o $@ -c mazed_cl_handler.cc
-	
+
+build/mazed_mazes_manager.o: mazed_mazes_manager.cc mazed_mazes_manager.hh mazed_globals.hh
+	$(CXX) $(CXXFLAGS) -o $@ -c mazed_mazes_manager.cc
+
 ############################################################
 # Other useful stuff:
 ############################################################
@@ -48,13 +51,13 @@ build/mazed_cl_handler.o: mazed_cl_handler.cc mazed_cl_handler.hh mazed_globals.
 
 run: all kill
 	@./mazed --logging 1
-	@./show.sh "./mazed"
+	@./.show.sh "./mazed"
 
 show:
-	@./show.sh "./mazed"
+	@./.show.sh "./mazed"
 
 kill:
-	@./mazed-kill.sh "./mazed"
+	@./.mazed-kill.sh "./mazed"
 
 # Remove object files generated during compiling.
 clean:

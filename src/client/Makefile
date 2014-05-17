@@ -48,7 +48,7 @@ build/client_terminal_UI.o:	client_interface_terminal.cc client_interface_termin
 # Rule to mark "false-positive" targets in project folder.
 .PHONY: run clean clean-all
 
-run:
+run: all
 	@./client
 
 # Remove object files generated during compiling.

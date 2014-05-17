@@ -75,38 +75,46 @@ void process_params(int argc, char *argv[])
   long          timeout;
   std::string   players_dir;
   std::string   mazes_dir;
+  std::string   mazes_ext;
   std::string   saves_dir;
+  std::string   saves_ext;
   std::string   log_dir;
   std::string   server_log_file = "server.log";     // NOTE: Currently not supported parameter.
 
   try {
     namespace params = boost::program_options;
 
-    params::options_description help(HELP_STRING, 100);
+    params::options_description help(HELP_STRING, 120);
     help.add_options() ("help,h", "show this message and exit");
     help.add_options() ("port,p", params::value<int>(&port)->default_value(49429),
-                        "specify the listening port (default: 49429)");
+                        "listening port (default: 49429)");
 
     help.add_options() ("sleep,s", params::value<long>(&sleep)->default_value(20),
-                        "specify the sleep duration in ms (default: 20)");
+                        "sleep duration in ms (default: 20)");
 
     help.add_options() ("timeout,t", params::value<long>(&timeout)->default_value(20000),
-                        "specify the maximum ping in ms (default 20000)");
+                        "maximum ping in ms (default 20000)");
 
     help.add_options() ("players-dir,i", params::value<std::string>(&players_dir)->default_value("./players"),
-                        "specify the folder for players information (default: ./players)");
+                        "folder of players information (default: ./players)");
 
     help.add_options() ("mazes-dir,m", params::value<std::string>(&mazes_dir)->default_value("./mazes"),
-                        "specify the game's mazes folder (default: ./mazes)");
-
+                        "folder of daemon's mazes (default: ./mazes)");
+    
     help.add_options() ("saves-dir,o", params::value<std::string>(&saves_dir)->default_value("./mazes/saves"),
-                        "specify the folder of players' saves (default: ./mazes/saves");
+                        "folder of players' saves (default: ./mazes/saves)");
 
-    help.add_options() ("log-dir,l", params::value<std::string>(&log_dir)->default_value("/tmp/mazed"),
-                        "specify the log folder (default: /tmp/mazed)");
-
-    help.add_options() ("logging", params::value<unsigned char>(&logging)->default_value('3'),
+    help.add_options() ("logging,l", params::value<unsigned char>(&logging)->default_value('3'),
                         "enables or disables logging [0|1|2|3] (default: 3)");
+
+    help.add_options() ("log-dir", params::value<std::string>(&log_dir)->default_value("/tmp/mazed"),
+                        "log folder (default: /tmp/mazed)");
+
+    help.add_options() ("mazes-ext", params::value<std::string>(&mazes_ext)->default_value(".maze"),
+                        "extension of mazes (default: *.maze)");
+
+    help.add_options() ("saves-ext", params::value<std::string>(&saves_ext)->default_value(".save"),
+                        "extension of saved mazes (default: *.save)");
 
     params::variables_map var_map;
     params::store(params::parse_command_line(argc, argv, help), var_map);
@@ -137,7 +145,9 @@ void process_params(int argc, char *argv[])
 
     std::get<mazed::PLAYERS_FOLDER>(SETTINGS) = players_dir;
     std::get<mazed::SAVES_FOLDER>(SETTINGS) = saves_dir;
+    std::get<mazed::SAVES_EXTENSION>(SETTINGS) = saves_ext;
     std::get<mazed::MAZES_FOLDER>(SETTINGS) = mazes_dir;
+    std::get<mazed::MAZES_EXTENSION>(SETTINGS) = mazes_ext;
     std::get<mazed::LOG_FOLDER>(SETTINGS) = log_dir;
     std::get<mazed::SERVER_LOG_FILE>(SETTINGS) = server_log_file;
     std::get<mazed::SLEEP_INTERVAL>(SETTINGS) = sleep;
@@ -178,6 +188,9 @@ void close_log()
  */
 int main(int argc, char *argv[])
 {{{
+  // Making backup of our working directory before some other process can change it to us:
+  std::get<mazed::DAEMON_FOLDER>(SETTINGS) = boost::filesystem::initial_path();
+
   process_params(argc, argv);
 
   // // // // // // // // //
@@ -280,8 +293,7 @@ int main(int argc, char *argv[])
 
     return mazed::exit_codes::NO_ERROR;
   }
-  catch (std::exception& e)
-  {
+  catch (std::exception& e) {
     syslog(LOG_ERR | LOG_USER, "Exception: %s", e.what());
   }
 

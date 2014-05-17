@@ -26,6 +26,7 @@
 #include <boost/thread.hpp>
 
 #include "mazed_globals.hh"
+#include "mazed_shared_resources.hh"
 #include "../protocol.hh"
 
 
@@ -48,41 +49,43 @@ namespace mazed {
       using tcp = boost::asio::ip::tcp;
 
       // References to already opened connection:
-      tcp::socket                       &socket_;
-      asio::io_service                  &io_service_;
+      tcp::socket                                   &socket_;
+      asio::io_service                              &io_service_;
+      
+      std::shared_ptr<mazed::shared_resources>      ps_shared_res_;
 
       // Pointer to serialization over the established connection:
-      std::unique_ptr<protocol::tcp_serialization> pu_tcp_connect_;
+      std::unique_ptr<protocol::tcp_serialization>  pu_tcp_connect_;
       
       // Objects for checking client's connection timeout:
-      asio::io_service                  timeout_io_service_;
-      asio::deadline_timer              timeout_;
+      asio::io_service                              timeout_io_service_;
+      asio::deadline_timer                          timeout_;
 
       // Necessary objects for proper synchronization:
-      boost::condition_variable         action_req_;
-      boost::condition_variable         asio_continue_;
-      boost::mutex                      action_req_mutex_;
-      boost::mutex                      asio_mutex_;
-      boost::mutex                      output_mutex_;
-      boost::upgrade_mutex              run_mutex_;
-      boost::barrier                    init_barrier_;
-      bool run_                         {true};
+      boost::condition_variable                     action_req_;
+      boost::condition_variable                     asio_continue_;
+      boost::mutex                                  action_req_mutex_;
+      boost::mutex                                  asio_mutex_;
+      boost::mutex                                  output_mutex_;
+      boost::upgrade_mutex                          run_mutex_;
+      boost::barrier                                init_barrier_;
+      bool run_                                     {true};
       
       // Logging file, logging file mutex & formatting object for date/time string:
-      boost::mutex                      log_mutex_;
-      std::ofstream                     log_file_;
-      std::locale                       dt_format_;
+      boost::mutex                                  log_mutex_;
+      std::ofstream                                 log_file_;
+      std::locale                                   dt_format_;
       
       // Incoming/outcoming messages' buffers:
-      std::vector<protocol::message>    messages_in_;
-      std::vector<protocol::message>    messages_out_;
-      protocol::message                 message_in_;
-      protocol::message                 message_out_;
+      std::vector<protocol::message>                messages_in_;
+      std::vector<protocol::message>                messages_out_;
+      protocol::message                             message_in_;
+      protocol::message                             message_out_;
 
       using pf_message_handler = void (client_handler::*)();
       
       // Array of pointers to message function handlers:
-      pf_message_handler                ctrl_message_handlers_[E_CTRL_TYPE_SIZE] {
+      pf_message_handler                            ctrl_message_handlers_[E_CTRL_TYPE_SIZE] {
         &client_handler::SYN_handler,
         &client_handler::FIN_handler,
         &client_handler::LOGIN_OR_CREATE_USER_handler,
@@ -99,10 +102,11 @@ namespace mazed {
         &client_handler::TERMINATE_GAME_handler,
       };
 
-      mazed::settings_tuple             &settings_;         // Server daemon settings.
+      mazed::settings_tuple                         &settings_;     // Server daemon settings.
 
     public:
-      client_handler(tcp::socket &sckt, asio::io_service &io_serv, mazed::settings_tuple &settings, unsigned conn_num);
+      client_handler(tcp::socket &sckt, asio::io_service &io_serv, mazed::settings_tuple &settings,
+                     const std::shared_ptr<mazed::shared_resources> ptr, unsigned conn_num);
      ~client_handler();
       void run();
 
