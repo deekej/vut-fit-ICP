@@ -105,6 +105,7 @@ namespace client {
         &mediator::MSG_GAMEs_DATA_handler,
         &mediator::MSG_PLAYER_JOINED_handler,
         &mediator::MSG_PLAYER_LEFT_handler,
+        &mediator::MSG_PLAYER_TIMEOUT_handler,
         &mediator::MSG_PLAYER_KILLED_handler,
         &mediator::MSG_PLAYER_GAME_OVER_handler,
         &mediator::MSG_PLAYER_WIN_handler,
@@ -169,6 +170,7 @@ namespace client {
       void MSG_GAMEs_DATA_handler();
       void MSG_PLAYER_JOINED_handler();
       void MSG_PLAYER_LEFT_handler();
+      void MSG_PLAYER_TIMEOUT_handler();
       void MSG_PLAYER_KILLED_handler();
       void MSG_PLAYER_GAME_OVER_handler();
       void MSG_PLAYER_WIN_handler();

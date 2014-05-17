@@ -147,6 +147,7 @@ namespace protocol {
     GAMES_DATA,
     PLAYER_JOINED,
     PLAYER_LEFT,
+    PLAYER_TIMEOUT,
     PLAYER_KILLED,
     PLAYER_GAME_OVER,
     PLAYER_WIN,
@@ -154,7 +155,7 @@ namespace protocol {
     GAME_TERMINATED,
   };
 
-  #define E_INFO_TYPE_SIZE 10U    // Used as a control mechanism against enum overflow. Always update!
+  #define E_INFO_TYPE_SIZE 11U    // Used as a control mechanism against enum overflow. Always update!
 
   enum E_error_type {
     WRONG_PROTOCOL = 0,
