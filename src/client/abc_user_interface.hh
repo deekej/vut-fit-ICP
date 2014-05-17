@@ -56,13 +56,16 @@ namespace ABC {
         GAME_SAVE,
         GAME_SHOW_STATS,
         SET_NICK,
-        EXIT,
-        TERMINATE,
+        NEW_IPv4_ADDRESS,
+        NEW_SERVER_PORT,
+        RECONNECT,
+        DISCONNECT,
         HELP,
+        EXIT,
         ERROR_INPUT_STREAM,
       };
 
-    static const std::size_t                    USER_COMMANDS_SIZE {24};
+    static const std::size_t                    USER_COMMANDS_SIZE {28};
 
     protected:
       boost::condition_variable                 &action_req_;

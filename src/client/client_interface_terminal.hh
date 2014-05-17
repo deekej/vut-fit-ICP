@@ -61,11 +61,11 @@ namespace client {
       static const std::string                          help_end_string_;
       static const std::string                          prompt_;
       static const std::string                          prompt_reply_;
-      static const std::string                          terminate_string_;
 
       static const std::multimap<std::string, enum E_user_command>            mappings_;
       static const std::map<std::size_t, std::pair<std::string, std::string>> help_lobby_commands_;
       static const std::map<std::size_t, std::pair<std::string, std::string>> help_ctrl_commands_;
+      static const std::map<std::size_t, std::pair<std::string, std::string>> help_connection_commands_;
 
       // // // // // // // // // // //
 

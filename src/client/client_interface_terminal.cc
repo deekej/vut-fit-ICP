@@ -44,9 +44,6 @@ namespace client {
   const std::string terminal_interface::prompt_ {"|-?? "};
   const std::string terminal_interface::prompt_reply_ {"|->> "};
 
-  // Magic string for termination of the program without any exit message, used for internal purposes:
-  const std::string terminal_interface::terminate_string_ {"t3Rm1N4T3:42!"};
-
   const std::multimap<std::string, enum ABC::user_interface::E_user_command> terminal_interface::mappings_ {
     {"left", E_user_command::LEFT},
     {"right", E_user_command::RIGHT},
@@ -73,8 +70,11 @@ namespace client {
     {"set-nick", E_user_command::SET_NICK},
     {"quit", E_user_command::EXIT},
     {"exit", E_user_command::EXIT},
-    {terminate_string_, E_user_command::TERMINATE},
     {"help", E_user_command::HELP},
+    {"ip-address", E_user_command::NEW_IPv4_ADDRESS},
+    {"port", E_user_command::NEW_SERVER_PORT},
+    {"reconnect", E_user_command::RECONNECT},
+    {"disconnect", E_user_command::DISCONNECT},
   };
 
   const std::map<std::size_t, std::pair<std::string, std::string>> terminal_interface::help_lobby_commands_ {
@@ -108,6 +108,13 @@ namespace client {
     {9, {"stop", "stop the movement"}},
   };
 
+  const std::map<std::size_t, std::pair<std::string, std::string>> terminal_interface::help_connection_commands_ {
+    {0, {"ip-address", "specify the new IPv4 connection address"}},
+    {1, {"port", "specify the new server port"}},
+    {2, {"reconnect", "connect again with current connection settings"}},
+    {3, {"disconnect", "drop the current connection"}},
+  };
+
   // // // // // // // // // // // //
 
   terminal_interface::terminal_interface(boost::condition_variable &action_req, boost::mutex &action_req_mutex,
@@ -130,10 +137,7 @@ namespace client {
     }
     run_mutex_.unlock_upgrade();
   
-    // Notify the input thread to terminate - it is in blocking read:
-    fwrite(terminate_string_.data(), sizeof(char), terminate_string_.size(), stdin);
-
-    // Notify the output thread:
+    // Notify the output thread (the input thread should be finished by now):
     output_req_.notify_one();
     
     // Threads should be able to successfully join right now:
@@ -175,10 +179,7 @@ namespace client {
     }
     run_mutex_.unlock_upgrade();
 
-    // Notify the input thread to terminate - it is in blocking read:
-    fwrite(terminate_string_.data(), sizeof(char), terminate_string_.size(), stdin);
-
-    // Notify the output thread:
+    // Notify the output thread (the input thread should be finished by now):
     output_req_.notify_one();
 
     // Thread should be able to successfully join right now:
@@ -214,6 +215,7 @@ namespace client {
 
 
     do {
+
       // Print the prompt only if requested so we don't end up with 2 prompts:
       if (print_prompt == true) {
         output_mutex_.lock();
@@ -226,9 +228,7 @@ namespace client {
         output_mutex_.unlock();
       }
 
-
       input = get_word();               // Read one word from std::cin.
-
 
       if (std::cin.bad() == true) {
         report_istream_error();         // Error occurred, bail out.
@@ -260,11 +260,6 @@ namespace client {
             print_prompt = true;
             continue;
           
-          // The request for terminating this thread was made:
-          case TERMINATE :
-            run = false;
-            continue;
-          
           case EXIT :
             output_mutex_.lock();
             {
@@ -286,6 +281,8 @@ namespace client {
           case GAME_JOIN :
           case GAME_LOAD :
           case SET_NICK :
+          case NEW_IPv4_ADDRESS :
+          case NEW_SERVER_PORT :
             input = get_word();
 
             if (std::cin.bad() == true) {
@@ -316,7 +313,6 @@ namespace client {
         print_prompt = false;
         print_newline_ = false;
       }
-
 
     } while (run == true);
 
@@ -459,6 +455,13 @@ namespace client {
       for (auto ctrl: help_ctrl_commands_) {
         std::cout << "| " << std::setw(20) << std::left << ctrl.second.first;
         std::cout << " - " << ctrl.second.second << "\n";
+      }
+
+      std::cout << "  --------------------\n";
+
+      for (auto connection: help_connection_commands_) {
+        std::cout << "| " << std::setw(20) << std::left << connection.second.first;
+        std::cout << " - " << connection.second.second << "\n";
       }
 
       std::cout << "  --------------------\n" << help_end_string_ << "\n  --------------------" << std::endl;

@@ -90,8 +90,12 @@ namespace client {
         &mediator::CMD_GAME_SAVE_handler,
         &mediator::CMD_GAME_SHOW_STATS_handler,
         &mediator::CMD_SET_NICK_handler,
-        &mediator::CMD_EXIT_handler,
+        &mediator::CMD_NEW_IPv4_ADRESSS_handler,
+        &mediator::CMD_NEW_SERVER_PORT_handler,
+        &mediator::CMD_RECONNECT_handler,
+        &mediator::CMD_DISCONNECT_handler,
         &mediator::CMD_HELP_handler,
+        &mediator::CMD_EXIT_handler,
         &mediator::CMD_ERROR_INPUT_STREAM_handler,
       };
 
@@ -124,7 +128,7 @@ namespace client {
 
       // // // // // // // // // // //
       
-      void display_message_error();
+      void display_message_error(bool use_interface = true);
       void display_error(const std::string &str);
 
       // // // // // // // // // // //
@@ -150,8 +154,12 @@ namespace client {
       void CMD_GAME_SAVE_handler();
       void CMD_GAME_SHOW_STATS_handler();
       void CMD_SET_NICK_handler();
-      void CMD_EXIT_handler();
+      void CMD_NEW_IPv4_ADRESSS_handler();
+      void CMD_NEW_SERVER_PORT_handler();
+      void CMD_RECONNECT_handler();
+      void CMD_DISCONNECT_handler();
       void CMD_HELP_handler();
+      void CMD_EXIT_handler();
       void CMD_ERROR_INPUT_STREAM_handler();
 
       // // // // // // // // // // //

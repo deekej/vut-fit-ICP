@@ -66,17 +66,17 @@ namespace client {
     // Acquire initial lock on the action request mutex:
     boost::unique_lock<boost::mutex> action_lock(action_req_mutex_);
 
-    p_interface_->initialize();
+    p_interface_->initialize();               // Start the UI.
     interface_barrier_.wait();                // Synchronize with the interface.
-    
+
     // Try to connect to server:
     if (p_tcp_connect_->connect() == false) {
       display_message_error();
-      return exit_codes::E_CONNECT_FAILED;    // Connection fail, nothing more to do.
     }
-
-    connection_barrier_.wait();               // Synchronize with established TCP connection thread.
-
+    else {
+      connection_barrier_.wait();             // Synchronize with established TCP connection thread.
+    }
+    
     do {
       action_req_.wait(action_lock);          // Wait for asynchronous event occurrence.
       
@@ -100,9 +100,7 @@ namespace client {
             }
             else {
               // TODO: send message about wrong protocol
-              display_error("Server is using wrong version of communication protocol, terminating...");
-              retval_ = exit_codes::E_WRONG_PROTOCOL;
-              run_ = false;
+              display_error("Server is using wrong version of communication protocol, disconnecting...");
             }
             break;
 
@@ -200,6 +198,7 @@ namespace client {
    */
   void mediator::error_message_handler()
   {{{
+    display_message_error();
     return;
   }}}
 
@@ -208,17 +207,21 @@ namespace client {
   /**
    * Displays the error messages generated from server or locally during network communication.
    */
-  void mediator::display_message_error()
+  void mediator::display_message_error(bool use_interface)
   {{{
-    assert(p_interface_ != NULL);
-    
     // There might be more than one error message:
     for (auto error_msg : message_in_.data) {
       if (error_msg.length() == 0 || error_msg == "") {
         continue;
       }
-
-      p_interface_->display_message("ERROR: " + error_msg);
+      
+      if (use_interface == true) {
+        assert(p_interface_ != NULL);
+        p_interface_->display_message("ERROR: " + error_msg);
+      }
+      else {
+        std::cerr << "ERROR: " << error_msg << std::endl;
+      }
     }
 
     return;
@@ -417,6 +420,38 @@ namespace client {
 
 
   void mediator::CMD_HELP_handler()
+  {{{
+    p_interface_->display_message("Command not implemented yet, sorry.");
+
+    return;
+  }}}
+
+
+  void mediator::CMD_NEW_IPv4_ADRESSS_handler()
+  {{{
+    p_interface_->display_message("Command not implemented yet, sorry.");
+
+    return;
+  }}}
+
+
+  void mediator::CMD_NEW_SERVER_PORT_handler()
+  {{{
+    p_interface_->display_message("Command not implemented yet, sorry.");
+
+    return;
+  }}}
+
+
+  void mediator::CMD_RECONNECT_handler()
+  {{{
+    p_interface_->display_message("Command not implemented yet, sorry.");
+
+    return;
+  }}}
+
+
+  void mediator::CMD_DISCONNECT_handler()
   {{{
     p_interface_->display_message("Command not implemented yet, sorry.");
 
