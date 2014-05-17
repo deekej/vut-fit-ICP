@@ -498,6 +498,12 @@ namespace client {
   }}}
 
 
+  void mediator::MSG_PLAYER_TIMEOUT_handler()
+  {{{
+    return;
+  }}}
+
+
   void mediator::MSG_PLAYER_KILLED_handler()
   {{{
     return;
