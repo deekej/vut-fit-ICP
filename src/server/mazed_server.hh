@@ -21,6 +21,7 @@
 #include <fstream>
 #include <list>
 #include <locale>
+#include <memory>
 #include <string>
 #include <utility>
 
@@ -31,6 +32,7 @@
 
 #include "mazed_globals.hh"
 #include "mazed_server_connection.hh"
+#include "mazed_shared_resources.hh"
 
 
 /* ****************************************************************************************************************** *
@@ -48,21 +50,23 @@ namespace mazed {
   class server {
       friend class mazed::server_connection;
 
-      asio::io_service                  &io_service_;
-      asio::signal_set                  signals_;
+      asio::io_service                            &io_service_;
+      asio::signal_set                            signals_;
       
-      boost::condition_variable         new_connection_;
-      boost::mutex                      connection_mutex_;
-      boost::mutex                      run_mutex_;
-      boost::mutex                      log_mutex_;
+      boost::condition_variable                   new_connection_;
+      boost::mutex                                connection_mutex_;
+      boost::mutex                                run_mutex_;
+      boost::mutex                                log_mutex_;
 
-      std::ofstream                     log_file_;
-      std::locale                       dt_format_;
+      std::ofstream                               log_file_;
+      std::locale                                 dt_format_;
 
-      mazed::settings_tuple             &settings_;
+      mazed::settings_tuple                       &settings_;
+      std::shared_ptr<mazed::shared_resources>    ps_shared_res_;
 
-      unsigned connect_ID_              {1};
-      bool run_                         {true};
+      unsigned connect_ID_                        {1};
+      bool run_                                   {true};
+
 
     public:
        server(boost::asio::io_service &io_service, mazed::settings_tuple &settings);

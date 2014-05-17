@@ -44,6 +44,8 @@ namespace mazed {
     // Create a formatting object for the date_time_str():
     dt_format_ = std::locale(std::locale::classic(), new boost::posix_time::time_facet("%Y-%m-%d @ %H:%M:%s"));
 
+    ps_shared_res_ = std::shared_ptr<mazed::shared_resources>(new mazed::shared_resources(settings));
+
     return;
   }}}
 

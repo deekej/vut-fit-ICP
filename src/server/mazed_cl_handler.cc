@@ -31,11 +31,15 @@
  ~ ~~~[ MEMBER FUNCTIONS IMPLEMENTATIONS ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
  * ****************************************************************************************************************** */
 
+// Typedef to save space when sending text messages to the client:
+using data_t = std::vector<std::string>;
+
 namespace mazed {
   client_handler::client_handler(tcp::socket &socket, asio::io_service &io_service, mazed::settings_tuple &settings,
-                                 unsigned connection_num) :
+                                 const std::shared_ptr<mazed::shared_resources> ptr, unsigned connection_num) :
     socket_(socket),
     io_service_(io_service),
+    ps_shared_res_{ptr},
     timeout_(timeout_io_service_),
     init_barrier_(3),
     settings_(settings)
@@ -583,20 +587,38 @@ namespace mazed {
     return;
   }}}
 
-
+  
+  /**
+   * Handles the client's request for displaying available mazes to play.
+   */
   void client_handler::LIST_MAZES_handler()
   {{{
+    std::vector<std::string> mazes = ps_shared_res_->p_mazes_manager->list_mazes();
+
+    if (mazes.size() == 0) {
+      log(mazed::log_level::ERROR, "No available mazes to load/play");
+      message_prepare(ERROR, SERVER_ERROR, UPDATE, data_t {"Server is missing mazes for loading/playing"});
+    }
+    else {
+      message_prepare(CTRL, LIST_MAZES, ACK, mazes);
+    }
+
+    return;
+  }}}
+
+  
+  /**
+   * Handles the client's request for displaying available saves to load.
+   */
+  void client_handler::LIST_SAVES_handler()
+  {{{
+    message_prepare(CTRL, LIST_SAVES, ACK, ps_shared_res_->p_mazes_manager->list_saves());
+
     return;
   }}}
 
 
   void client_handler::LIST_RUNNING_handler()
-  {{{
-    return;
-  }}}
-
-
-  void client_handler::LIST_SAVES_handler()
   {{{
     return;
   }}}

@@ -270,10 +270,9 @@ namespace client {
             output_mutex_.unlock();
 
             run = false;
-            print_newline_ = false;
-            break;
 
-          case STOP :
+          case LIST_MAZES :
+          case LIST_SAVES :
             print_prompt = false;
             print_newline_ = false;
             break;

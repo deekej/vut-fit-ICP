@@ -23,8 +23,9 @@
 /* ****************************************************************************************************************** *
  ~ ~~~[ MEMBER FUNCTIONS IMPLEMENTATIONS ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
  * ****************************************************************************************************************** */
+using namespace protocol;
 
-using command = ABC::user_interface::E_user_command;
+using command_t = ABC::user_interface::E_user_command;
 
 namespace client {
   mediator::mediator(client::settings_tuple &settings) :
@@ -79,10 +80,12 @@ namespace client {
     
     do {
       action_req_.wait(action_lock);          // Wait for asynchronous event occurrence.
+
       
       // Call the user command handler, if it's needed:
-      if (user_command_ != command::NONE) {
+      if (user_command_ != command_t::NONE) {
         (this->*commands_handlers_[user_command_])();
+        user_command_ = command_t::NONE;
       }
       
       // Categorize the incoming message and call appropriate handler:
@@ -90,21 +93,29 @@ namespace client {
         new_message_flag_ = false;            // Reseting the flag.
 
         switch (message_in_.type) {
-          case protocol::E_type::CTRL :
-            ctrl_message_handler();
+          case CTRL :
+            if (message_in_.ctrl_type >= 0 && message_in_.ctrl_type < E_CTRL_TYPE_SIZE) {
+              (this->*ctrl_message_handlers_[message_in_.ctrl_type])();
+            }
+            else {
+              // TODO: send message about wrong protocol
+              display_error("Server is using wrong version of communication protocol, disconnecting...");
+              // TODO: disconnect
+            }
             break;
 
-          case protocol::E_type::INFO :
+          case INFO :
             if (message_in_.info_type >= 0 && message_in_.info_type < E_INFO_TYPE_SIZE) {
               (this->*info_message_handlers_[message_in_.info_type])();
             }
             else {
               // TODO: send message about wrong protocol
               display_error("Server is using wrong version of communication protocol, disconnecting...");
+              // TODO: disconnect
             }
             break;
 
-          case protocol::E_type::ERROR :
+          case ERROR :
             error_message_handler();
             break;
         }
@@ -118,6 +129,18 @@ namespace client {
   // // // // // // // // // // // //
 
   /**
+   * Wrapping function for sending prepared message to the server.
+   */
+  inline void mediator::message_send()
+  {{{
+    assert(p_tcp_connect_ != NULL);
+
+    p_tcp_connect_->async_send(message_out_);
+
+    return;
+  }}}
+
+  /**
    * Prepares the message to be sent [1st overload]. This is overload for CTRL type of message.
    *
    * @param[in]   type        Type of the message to be used. (Used for assertion checking for protocol correctness.)
@@ -128,7 +151,7 @@ namespace client {
   inline void mediator::message_prepare(protocol::E_type type, protocol::E_ctrl_type ctrl_type,
                                         protocol::E_status status, std::vector<std::string> data)
   {{{
-    assert(type == protocol::E_type::CTRL);       // Make sure we're sending the right type of message.
+    assert(type == CTRL);               // Make sure we're sending the right type of message.
 
     message_out_.type = type;
     message_out_.ctrl_type = ctrl_type;
@@ -150,7 +173,7 @@ namespace client {
   inline void mediator::message_prepare(protocol::E_type type, protocol::E_info_type info_type,
                                         protocol::E_status status, std::vector<std::string> data)
   {{{
-    assert(type == protocol::E_type::INFO);       // Make sure we're sending the right type of message.
+    assert(type == INFO);               // Make sure we're sending the right type of message.
 
     message_out_.type = type;
     message_out_.info_type = info_type;
@@ -172,7 +195,7 @@ namespace client {
   inline void mediator::message_prepare(protocol::E_type type, protocol::E_error_type error_type,
                                         protocol::E_status status, std::vector<std::string> data)
   {{{
-    assert(type == protocol::E_type::ERROR);      // Make sure we're sending the right type of message.
+    assert(type == ERROR);              // Make sure we're sending the right type of message.
 
     message_out_.type = type;
     message_out_.error_type = error_type;
@@ -306,17 +329,25 @@ namespace client {
   }}}
 
 
+  /**
+   * Sends a message to the server to list all available mazes.
+   */
   void mediator::CMD_LIST_MAZES_handler()
   {{{
-    p_interface_->display_message("Command not implemented yet, sorry.");
+    message_prepare(CTRL, LIST_MAZES, QUERY);
+    message_send();
 
     return;
   }}}
 
 
+  /**
+   * Sends a message to the server to list all available saves.
+   */
   void mediator::CMD_LIST_SAVES_handler()
   {{{
-    p_interface_->display_message("Command not implemented yet, sorry.");
+    message_prepare(CTRL, LIST_SAVES, QUERY);
+    message_send();
 
     return;
   }}}
@@ -468,67 +499,191 @@ namespace client {
 
   // // // // // // // // // // // //
 
-  void mediator::MSG_HELLO_handler()
+  void mediator::CTRL_MSG_SYN_handler()
   {{{
     return;
   }}}
 
 
-  void mediator::MSG_LOAD_DATA_handler()
+  void mediator::CTRL_MSG_FIN_handler()
   {{{
     return;
   }}}
 
 
-  void mediator::MSG_GAMEs_DATA_handler()
+  void mediator::CTRL_MSG_LOGIN_OR_CREATE_USER_handler()
   {{{
     return;
   }}}
 
 
-  void mediator::MSG_PLAYER_JOINED_handler()
+  void mediator::CTRL_MSG_SET_NICK_handler()
+  {{{
+    return;
+  }}}
+
+  // // // // // // // // // // // //
+  
+  /**
+   * Displays the response from the server to request of listing all available mazes. It also stores a copy for later
+   * use.
+   */
+  void mediator::CTRL_MSG_LIST_MAZES_handler()
+  {{{
+    assert(p_interface_ != NULL);
+
+    available_mazes_ = message_in_.data;        // Make a backup for when user selects a game to play.
+
+    p_interface_->display_message("×--------------------------×");
+    p_interface_->display_message("| Mazes available to play: |");
+    p_interface_->display_message("×--------------------------×");
+    
+    for (std::size_t i = 0; i < available_mazes_.size(); i++) {
+      p_interface_->display_message("  [" + std::to_string(i + 1) + "] " + available_mazes_[i]);
+    }
+    
+    return;
+  }}}
+
+
+  /**
+   * Displays the response from the server to request of listing all available saves. It also stores a copy for later
+   * use.
+   */
+  void mediator::CTRL_MSG_LIST_SAVES_handler()
+  {{{
+    assert(p_interface_ != NULL);
+
+    available_saves_ = message_in_.data;        // Make a backup for when user selects a save game to load.
+
+    if (available_saves_.size() == 0) {
+      p_interface_->display_message("You have no saved games");
+      return;
+    }
+
+    p_interface_->display_message("×--------------------------×");
+    p_interface_->display_message("| Saves available to load: |");
+    p_interface_->display_message("×--------------------------×");
+    
+    for (std::size_t i = 0; i < available_saves_.size(); i++) {
+      p_interface_->display_message("  [" + std::to_string(i + 1) + "] " + available_saves_[i]);
+    }
+    
+    return;
+  }}}
+
+
+  void mediator::CTRL_MSG_LIST_RUNNING_handler()
   {{{
     return;
   }}}
 
 
-  void mediator::MSG_PLAYER_LEFT_handler()
+  void mediator::CTRL_MSG_CREATE_GAME_handler()
   {{{
     return;
   }}}
 
 
-  void mediator::MSG_PLAYER_TIMEOUT_handler()
+  void mediator::CTRL_MSG_LOAD_GAME_handler()
   {{{
     return;
   }}}
 
 
-  void mediator::MSG_PLAYER_KILLED_handler()
+  void mediator::CTRL_MSG_SAVE_GAME_handler()
   {{{
     return;
   }}}
 
 
-  void mediator::MSG_PLAYER_GAME_OVER_handler()
+  void mediator::CTRL_MSG_JOIN_GAME_handler()
   {{{
     return;
   }}}
 
 
-  void mediator::MSG_PLAYER_WIN_handler()
+  void mediator::CTRL_MSG_LEAVE_GAME_handler()
   {{{
     return;
   }}}
 
 
-  void mediator::MSG_GAME_RESTARTED_handler()
+  void mediator::CTRL_MSG_RESTART_GAME_handler()
   {{{
     return;
   }}}
 
 
-  void mediator::MSG_GAME_TERMINATED_handler()
+  void mediator::CTRL_MSG_TERMINATE_GAME_handler()
+  {{{
+    return;
+
+  }}}
+
+  // // // // // // // // // // // //
+
+  void mediator::INFO_MSG_HELLO_handler()
+  {{{
+    return;
+  }}}
+
+
+  void mediator::INFO_MSG_LOAD_DATA_handler()
+  {{{
+    return;
+  }}}
+
+
+  void mediator::INFO_MSG_GAMEs_DATA_handler()
+  {{{
+    return;
+  }}}
+
+
+  void mediator::INFO_MSG_PLAYER_JOINED_handler()
+  {{{
+    return;
+  }}}
+
+
+  void mediator::INFO_MSG_PLAYER_LEFT_handler()
+  {{{
+    return;
+  }}}
+
+
+  void mediator::INFO_MSG_PLAYER_TIMEOUT_handler()
+  {{{
+    return;
+  }}}
+
+
+  void mediator::INFO_MSG_PLAYER_KILLED_handler()
+  {{{
+    return;
+  }}}
+
+
+  void mediator::INFO_MSG_PLAYER_GAME_OVER_handler()
+  {{{
+    return;
+  }}}
+
+
+  void mediator::INFO_MSG_PLAYER_WIN_handler()
+  {{{
+    return;
+  }}}
+
+
+  void mediator::INFO_MSG_GAME_RESTARTED_handler()
+  {{{
+    return;
+  }}}
+
+
+  void mediator::INFO_MSG_GAME_TERMINATED_handler()
   {{{
     return;
   }}}

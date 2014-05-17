@@ -89,7 +89,7 @@ namespace mazed {
     p_server_->new_connection_.notify_one();
 
     // Create new client handler and pass all the requirements so the client can be serviced:
-    p_handler_ = new mazed::client_handler(socket_, io_service_, settings_, connect_ID_);
+    p_handler_ = new mazed::client_handler(socket_, io_service_, settings_, p_server_->ps_shared_res_, connect_ID_);
     p_handler_->run();
 
     return;

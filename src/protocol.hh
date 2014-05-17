@@ -168,6 +168,7 @@ namespace protocol {
     TIMEOUT,
     HANDSHAKE,
     ALREADY_PLAYED,
+    SERVER_ERROR,
     UNKNOWN_ERROR,
   };
 
