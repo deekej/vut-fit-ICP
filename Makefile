@@ -22,7 +22,7 @@ all:
 ############################################################
 
 # Rule to mark "false-positive" targets in project folder.
-.PHONY: run doxygen pack clean clean-all
+.PHONY: run doxygen pack stats stats-display clean clean-all
 
 run:
 
@@ -30,6 +30,13 @@ doxygen:
 
 pack:
 
+stats:
+	@echo "make[1]: Generating git statistics"
+	@gitstats . stats/
+	@sensible-browser 'stats/index.html'
+
+stats-display:
+	@sensible-browser 'stats/index.html'
 
 # Remove object files generated during compiling.
 clean:
