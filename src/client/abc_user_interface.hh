@@ -66,7 +66,7 @@ namespace ABC {
         ERROR_INPUT_STREAM,
       };
 
-    static const std::size_t                    USER_COMMANDS_SIZE {28};
+    static const std::size_t                    USER_COMMANDS_SIZE {29};
 
     protected:
       boost::condition_variable                 &action_req_;
