@@ -72,7 +72,8 @@ namespace client {
 
     // Try to connect to server:
     if (p_tcp_connect_->connect() == false) {
-      display_message_error();
+      error_message_handler();
+      message_in_.data.clear();               // Clear any residual content.
     }
     else {
       connection_barrier_.wait();             // Synchronize with established TCP connection thread.
@@ -99,8 +100,8 @@ namespace client {
             }
             else {
               // TODO: send message about wrong protocol
-              display_error("Server is using wrong version of communication protocol, disconnecting...");
-              // TODO: disconnect
+              display_error("Server is using wrong version of protocol, disconnecting...");
+              p_tcp_connect_->disconnect();
             }
             break;
 
@@ -110,8 +111,8 @@ namespace client {
             }
             else {
               // TODO: send message about wrong protocol
-              display_error("Server is using wrong version of communication protocol, disconnecting...");
-              // TODO: disconnect
+              display_error("Server is using wrong version of protocol, disconnecting...");
+              p_tcp_connect_->disconnect();
             }
             break;
 
@@ -119,6 +120,8 @@ namespace client {
             error_message_handler();
             break;
         }
+
+        message_in_.data.clear();             // Clear any residual content.
       }
 
     } while (run_ == true);
@@ -208,20 +211,38 @@ namespace client {
   // // // // // // // // // // // //
   
   /**
-   * TODO: This is dummy for now.
-   */
-  void mediator::ctrl_message_handler()
-  {{{
-    return;
-  }}}
-
-
-  /**
-   * TODO: This is dummy for now.
+   * Displays the appropriate error message to the user and makes proper disconnect on client side if necessary.
    */
   void mediator::error_message_handler()
   {{{
-    display_message_error();
+
+    switch (message_in_.error_type) {
+      case WRONG_PROTOCOL :
+      case EMPTY_MESSAGE :
+      case MULTIPLE_MESSAGES :
+      case REJECTED_CONNECTION :
+      case CONNECTION_CLOSED :
+      case TIMEOUT :
+      case HANDSHAKE :
+      case ALREADY_PLAYED :
+      case SERVER_ERROR :
+      case SERVER_ERROR_INFO :
+      case UNKNOWN_ERROR :
+        p_tcp_connect_->disconnect();
+        display_message_error();
+        p_interface_->display_message("NOTE:  You can try to reconnect to server by writing 'reconnect' or"
+                                      "\n\t    write 'quit' or 'exit' to end the program.");
+        break;
+
+      case CONNECTION_FAILED :
+        display_message_error();
+        p_interface_->display_message("NOTE:  You can specify the new IP address/port and try to connect again by using"
+                                      "\n\t    the 'reconnect' feature. Write 'help' to see the available commands.");
+        break;
+      default :
+        display_message_error();
+        break;
+    }
     return;
   }}}
 
@@ -230,20 +251,21 @@ namespace client {
   /**
    * Displays the error messages generated from server or locally during network communication.
    */
-  void mediator::display_message_error(bool use_interface)
+  void mediator::display_message_error()
   {{{
+    assert(p_interface_ != NULL);
+
     // There might be more than one error message:
     for (auto error_msg : message_in_.data) {
       if (error_msg.length() == 0 || error_msg == "") {
         continue;
       }
       
-      if (use_interface == true) {
-        assert(p_interface_ != NULL);
+      if (message_in_.status == LOCAL) {
         p_interface_->display_message("ERROR: " + error_msg);
       }
       else {
-        std::cerr << "ERROR: " << error_msg << std::endl;
+        p_interface_->display_message("SERVER ERROR: " + error_msg);
       }
     }
 
