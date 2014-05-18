@@ -145,12 +145,11 @@ namespace client {
 
       // // // // // // // // // // //
 
-      void ctrl_message_handler();
       void error_message_handler();
 
       // // // // // // // // // // //
       
-      void display_message_error(bool use_interface = true);
+      void display_message_error();
       void display_error(const std::string &str);
 
       // // // // // // // // // // //

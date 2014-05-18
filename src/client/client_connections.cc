@@ -51,9 +51,6 @@ namespace client {
     messages_out_[0].ctrl_type = protocol::E_ctrl_type::SYN;
     messages_out_[0].status = protocol::E_status::QUERY;
 
-    // Make sure we have enough memory to create 2 possible error messages:
-    message_in_.data.resize(2);
-
     // Prepare HELLO packet for fast sending:
     HELLO_packet_.type = protocol::E_type::INFO;
     HELLO_packet_.info_type = protocol::E_info_type::HELLO;
@@ -84,7 +81,7 @@ namespace client {
       message_in_.type = protocol::E_type::ERROR;
       message_in_.error_type = protocol::E_error_type::ALREADY_CONNECTED;
       message_in_.status = protocol::E_status::LOCAL;
-      message_in_.data[0] = "Connection already established";
+      message_in_.data.push_back("Connection already established");
 
       return false;
     }
@@ -97,8 +94,8 @@ namespace client {
       message_in_.type = protocol::E_type::ERROR;
       message_in_.error_type = protocol::E_error_type::CONNECTION_FAILED;
       message_in_.status = protocol::E_status::LOCAL;
-      message_in_.data[0] = error.message();
-      message_in_.data[1] = "(NOTE: Are both the IP address and server port correct?)";
+      message_in_.data.push_back(error.message());
+      message_in_.data.back().append(" (NOTE: Are both the IP address and server port correct?)");
 
       return false;
     }
@@ -119,8 +116,8 @@ namespace client {
       message_in_.type = protocol::E_type::ERROR;
       message_in_.error_type = protocol::E_error_type::CONNECTION_FAILED;
       message_in_.status = protocol::E_status::LOCAL;
-      message_in_.data[0] = error.message();
-      message_in_.data[1] = "(NOTE: Are both the IP address and server port correct?)";
+      message_in_.data.push_back(error.message());
+      message_in_.data.back().append(" (NOTE: Are both the IP address and server port correct?)");
 
       return false;
     }
@@ -144,9 +141,9 @@ namespace client {
   {{{
     if (socket_.is_open() == false) {
       message_in_.type = protocol::E_type::ERROR;
-      message_in_.error_type = protocol::E_error_type::CLOSED_CONNECTION;
+      message_in_.error_type = protocol::E_error_type::NO_CONNECTION;
       message_in_.status = protocol::E_status::LOCAL;
-      message_in_.data[0] = "No established connection";
+      message_in_.data.push_back("No established connection");
 
       return false;
     }
@@ -233,8 +230,10 @@ namespace client {
         message_in_.type = protocol::E_type::ERROR;
         message_in_.error_type = protocol::E_error_type::HANDSHAKE;
         message_in_.status = protocol::E_status::LOCAL;
-        message_in_.data[0] = "During HANDSHAKE init: ";
-        message_in_.data[0].append(error.message());
+        message_in_.data.push_back("During HANDSHAKE init: ");
+        message_in_.data.back().append(error.message());
+        message_in_.data.push_back("The connection has been closed");
+
 
         new_message_flag_ = true;
         action_req_.notify_one();
@@ -266,8 +265,9 @@ namespace client {
         message_in_.type = protocol::E_type::ERROR;
         message_in_.error_type = protocol::E_error_type::HANDSHAKE;
         message_in_.status = protocol::E_status::LOCAL;
-        message_in_.data[0] = "During HANDSHAKE confirm: ";
-        message_in_.data[0].append(error.message());
+        message_in_.data.push_back("During HANDSHAKE confirm: ");
+        message_in_.data.back().append(error.message());
+        message_in_.data.push_back("The connection has been closed");
 
         new_message_flag_ = true;
         action_req_.notify_one();
@@ -285,13 +285,13 @@ namespace client {
 
         if (messages_in_.size() == 0) {
           message_in_.error_type = protocol::E_error_type::EMPTY_MESSAGE;
-          message_in_.data[0] = "Message with empty content received";
-          message_in_.data[1] = "The connection has been closed";
+          message_in_.data.push_back("Message with empty content received");
+          message_in_.data.push_back("The connection has been closed");
         }
         else {
           message_in_.error_type = protocol::E_error_type::MULTIPLE_MESSAGES;
-          message_in_.data[0] = "Multiple received messages ignored - wrong protocol";
-          message_in_.data[1] = "The connection has been closed";
+          message_in_.data.push_back("Wrong protocol - multiple messages received");
+          message_in_.data.push_back("The connection has been closed");
         }
 
         new_message_flag_ = true;
@@ -309,7 +309,8 @@ namespace client {
         message_in_.type = protocol::E_type::ERROR;
         message_in_.error_type = protocol::E_error_type::WRONG_PROTOCOL;
         message_in_.status = protocol::E_status::LOCAL;
-        message_in_.data[0] = "Server is using unknown protocol";
+        message_in_.data.push_back("Server is using unknown protocol");
+        message_in_.data.push_back("The connection has been closed");
 
         new_message_flag_ = true;
         action_req_.notify_one();
@@ -325,7 +326,8 @@ namespace client {
         message_in_.type = protocol::E_type::ERROR;
         message_in_.error_type = protocol::E_error_type::REJECTED_CONNECTION;
         message_in_.status = protocol::E_status::LOCAL;
-        message_in_.data[0] = "Server rejected the connection";
+        message_in_.data.push_back("Server rejected the connection");
+        message_in_.data.push_back("The connection has been closed");
 
         new_message_flag_ = true;
         action_req_.notify_one();
@@ -396,7 +398,8 @@ namespace client {
           message_in_.type = protocol::E_type::ERROR;
           message_in_.error_type = protocol::E_error_type::TIMEOUT;
           message_in_.status = protocol::E_status::LOCAL;
-          message_in_.data[0] = "Connection to server has timed out";
+          message_in_.data.push_back("Connection to server has timed out");
+          message_in_.data.push_back("The connection has been closed");
 
           new_message_flag_ = true;
           action_req_.notify_one();
@@ -412,7 +415,8 @@ namespace client {
           message_in_.type = protocol::E_type::ERROR;
           message_in_.error_type = protocol::E_error_type::UNKNOWN_ERROR;
           message_in_.status = protocol::E_status::LOCAL;
-          message_in_.data[0] = error.message();
+          message_in_.data.push_back(error.message());
+          message_in_.data.push_back("The connection has been closed");
 
           new_message_flag_ = true;
           action_req_.notify_one();
@@ -475,7 +479,8 @@ namespace client {
           message_in_.type = protocol::E_type::ERROR;
           message_in_.error_type = protocol::E_error_type::UNKNOWN_ERROR;
           message_in_.status = protocol::E_status::LOCAL;
-          message_in_.data[0] = error.message();
+          message_in_.data.push_back(error.message());
+          message_in_.data.push_back("The connection has been closed");
 
           new_message_flag_ = true;
           action_req_.notify_one();
@@ -502,16 +507,21 @@ namespace client {
 
         switch (error.value()) {
           case boost::asio::error::eof :
-            message_in_.data[0] = "Connection closed by server";
+            message_in_.error_type = protocol::E_error_type::CONNECTION_CLOSED;
+            message_in_.data.push_back("Connection closed by server");
             break;
 
           case boost::asio::error::operation_aborted :
-            message_in_.data[0] = "Connection to server has timed out";
+            message_in_.error_type = protocol::E_error_type::TIMEOUT;
+            message_in_.data.push_back("Connection to server has timed out");
+            message_in_.data.push_back("The connection has been closed");
             break;
 
           default :
-            message_in_.data[0] = "While sending message: ";
-            message_in_.data[0].append(error.message());
+            message_in_.error_type = protocol::E_error_type::UNKNOWN_ERROR;
+            message_in_.data.push_back("While sending message: ");
+            message_in_.data.back().append(error.message());
+            message_in_.data.push_back("The connection has been closed");
             break;
         }
 
@@ -556,20 +566,21 @@ namespace client {
 
         switch (error.value()) {
           case boost::asio::error::eof :
-            message_in_.error_type = protocol::E_error_type::CLOSED_CONNECTION;
-            message_in_.data[0] = "Connection closed by server";
+            message_in_.error_type = protocol::E_error_type::CONNECTION_CLOSED;
+            message_in_.data.push_back("Connection closed by server");
             break;
 
           case boost::asio::error::operation_aborted :
             message_in_.error_type = protocol::E_error_type::TIMEOUT;
-            message_in_.data[0] = "Connection to server has timed out";
+            message_in_.data.push_back("Connection to server has timed out");
+            message_in_.data.push_back("The connection has been closed");
             break;
 
           default :
             message_in_.error_type = protocol::E_error_type::UNKNOWN_ERROR;
-            message_in_.data[0] = "While receiving message: ";
-            message_in_.data[0].append(error.message());
-            message_in_.data[0] = "Connection has been closed";
+            message_in_.data.push_back("While receiving message: ");
+            message_in_.data.back().append(error.message());
+            message_in_.data.push_back("The connection has been closed");
             break;
         }
         
@@ -589,11 +600,13 @@ namespace client {
 
         if (messages_in_.size() == 0) {
           message_in_.error_type = protocol::E_error_type::EMPTY_MESSAGE;
-          message_in_.data[0] = "Message with empty content ignored";
+          message_in_.data.push_back("Message with empty content received");
+          message_in_.data.push_back("The connection has been closed");
         }
         else {
           message_in_.error_type = protocol::E_error_type::MULTIPLE_MESSAGES;
-          message_in_.data[0] = "Multiple received messages ignored - wrong protocol";
+          message_in_.data.push_back("Wrong protocol - multiple messages received");
+          message_in_.data.push_back("The connection has been closed");
         }
 
         new_message_flag_ = true;
@@ -615,7 +628,8 @@ namespace client {
             message_in_.type = protocol::E_type::ERROR;
             message_in_.status = protocol::E_status::LOCAL;
             message_in_.error_type = protocol::E_error_type::WRONG_PROTOCOL;
-            message_in_.data[0] = "Server is using wrong protocol";
+            message_in_.data.push_back("Server is using wrong protocol");
+            message_in_.data.push_back("The connection has been closed");
 
             new_message_flag_ = true;
             action_req_.notify_one();
