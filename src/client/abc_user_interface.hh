@@ -55,6 +55,7 @@ namespace ABC {
         GAME_LOAD,
         GAME_SAVE,
         GAME_SHOW_STATS,
+        SET_SPEED,
         SET_NICK,
         NEW_IPv4_ADDRESS,
         NEW_SERVER_PORT,
@@ -65,7 +66,7 @@ namespace ABC {
         ERROR_INPUT_STREAM,
       };
 
-    static const std::size_t                    USER_COMMANDS_SIZE {28};
+    static const std::size_t                    USER_COMMANDS_SIZE {29};
 
     protected:
       boost::condition_variable                 &action_req_;

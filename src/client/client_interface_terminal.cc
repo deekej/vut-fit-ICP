@@ -67,6 +67,7 @@ namespace client {
     {"load-game", E_user_command::GAME_LOAD},
     {"save-game", E_user_command::GAME_SAVE},
     {"show-stats", E_user_command::GAME_SHOW_STATS},
+    {"set-speed", E_user_command::SET_SPEED},
     {"set-nick", E_user_command::SET_NICK},
     {"quit", E_user_command::EXIT},
     {"exit", E_user_command::EXIT},
@@ -91,8 +92,9 @@ namespace client {
     {10, {"load-last", "load your last save game, if any"}},
     {11, {"load-game [number]", "load a saved game instance specified by the number"}},
     {12, {"save-game", "save current game instance on the server"}},
-    {13, {"show-stats", "show stats of last game"}},
+    {13, {"set-speed [number]", "speed of the game in ms (default: 1000)"}},
     {14, {"set-nick [nick]", "set new nickname to [nick]"}},
+    {15, {"show-stats", "show stats of last game"}},
   };
 
   const std::map<std::size_t, std::pair<std::string, std::string>> terminal_interface::help_ctrl_commands_ {
@@ -282,6 +284,7 @@ namespace client {
           case GAME_JOIN :
           case GAME_LOAD :
           case SET_NICK :
+          case SET_SPEED :
           case NEW_IPv4_ADDRESS :
           case NEW_SERVER_PORT :
             input = get_word();
