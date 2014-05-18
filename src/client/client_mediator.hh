@@ -92,6 +92,7 @@ namespace client {
         &mediator::CMD_GAME_LOAD_handler,
         &mediator::CMD_GAME_SAVE_handler,
         &mediator::CMD_GAME_SHOW_STATS_handler,
+        &mediator::CMD_SET_SPEED_handler,
         &mediator::CMD_SET_NICK_handler,
         &mediator::CMD_NEW_IPv4_ADRESSS_handler,
         &mediator::CMD_NEW_SERVER_PORT_handler,
@@ -174,6 +175,7 @@ namespace client {
       void CMD_GAME_LOAD_handler();
       void CMD_GAME_SAVE_handler();
       void CMD_GAME_SHOW_STATS_handler();
+      void CMD_SET_SPEED_handler();
       void CMD_SET_NICK_handler();
       void CMD_NEW_IPv4_ADRESSS_handler();
       void CMD_NEW_SERVER_PORT_handler();

@@ -455,6 +455,14 @@ namespace client {
   }}}
 
 
+  void mediator::CMD_SET_SPEED_handler()
+  {{{
+    p_interface_->display_message("Command not implemented yet, sorry.");
+
+    return;
+  }}}
+
+
   void mediator::CMD_SET_NICK_handler()
   {{{
     p_interface_->display_message("Command not implemented yet, sorry.");
