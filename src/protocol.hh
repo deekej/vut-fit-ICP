@@ -164,15 +164,17 @@ namespace protocol {
     CONNECTION_FAILED,
     ALREADY_CONNECTED,
     REJECTED_CONNECTION,
-    CLOSED_CONNECTION,
+    CONNECTION_CLOSED,
+    NO_CONNECTION,
     TIMEOUT,
     HANDSHAKE,
     ALREADY_PLAYED,
     SERVER_ERROR,
+    SERVER_ERROR_INFO,
     UNKNOWN_ERROR,
   };
 
-  #define E_ERROR_TYPE_SIZE 11U   // Used as a control mechanism against enum overflow. Always update!
+  #define E_ERROR_TYPE_SIZE 14U   // Used as a control mechanism against enum overflow. Always update!
 
   enum E_status {
     ACK = 0,

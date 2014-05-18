@@ -132,7 +132,7 @@ namespace mazed {
             (this->*ctrl_message_handlers_[message_in_.ctrl_type])();
           }
           else {
-            message_prepare(ERROR, WRONG_PROTOCOL, UPDATE);
+            message_prepare(ERROR, WRONG_PROTOCOL, UPDATE, data_t {"Wrong version of protocol"});
             log(mazed::log_level::ERROR, "CTRL type value overflow detected");
           }
           break;
@@ -142,7 +142,7 @@ namespace mazed {
             message_prepare(INFO, HELLO, ACK);
           }
           else {
-            message_prepare(ERROR, WRONG_PROTOCOL, UPDATE);
+            message_prepare(ERROR, WRONG_PROTOCOL, UPDATE, data_t {"Only HELLO packets are allowed to send on server"});
             log(mazed::log_level::ERROR, "Wrong INFO message received");
           }
           break;
@@ -152,7 +152,7 @@ namespace mazed {
           break;
 
         default :
-          message_prepare(ERROR, WRONG_PROTOCOL, UPDATE);
+          message_prepare(ERROR, WRONG_PROTOCOL, UPDATE, data_t {"Unknown protocol message"});
           log(mazed::log_level::ERROR, "Unknown message type received");
           break;
       }
@@ -224,7 +224,7 @@ namespace mazed {
       message_prepare(CTRL, SYN, NACK);
       async_send(message_out_);
 
-      message_prepare(ERROR, WRONG_PROTOCOL, UPDATE);
+      message_prepare(ERROR, WRONG_PROTOCOL, UPDATE, data_t {"Unknown HANDSHAKE protocol"});
       async_send(message_out_);
 
       log(mazed::log_level::ERROR, "Handshake was unsuccessful");
@@ -279,14 +279,14 @@ namespace mazed {
         
         // TIMEOUT has expired - inform the client:
         case boost::system::errc::success :
-          message_prepare(ERROR, TIMEOUT, UPDATE);
+          message_prepare(ERROR, TIMEOUT, UPDATE, data_t {"Your connection has timed out"});
           async_send(message_out_);
           break;
         
         // Different error - log it & inform the client:
         default :
           log(mazed::log_level::ERROR, error.message().c_str());
-          message_prepare(ERROR, UNKNOWN_ERROR, UPDATE);
+          message_prepare(ERROR, SERVER_ERROR, UPDATE, data_t {"Unknown error occured"});
           async_send(message_out_);
           break;
       }
@@ -377,11 +377,11 @@ namespace mazed {
     // Testing the message received - the protocol expects only one actual message in client's request:
     if (messages_in_.size() != 1) {
       if (messages_in_.size() == 0) {
-        message_prepare(ERROR, EMPTY_MESSAGE, UPDATE);
+        message_prepare(ERROR, EMPTY_MESSAGE, UPDATE, data_t {"Empty message received"});
         log(mazed::log_level::ERROR, "Message with no content received");
       }
       else {
-        message_prepare(ERROR, MULTIPLE_MESSAGES, UPDATE);
+        message_prepare(ERROR, MULTIPLE_MESSAGES, UPDATE, data_t {"Multiple messages received"});
         log(mazed::log_level::ERROR, "Multiple messages received");
       }
       
@@ -444,8 +444,12 @@ namespace mazed {
   void client_handler::asio_loop_send_handler(const boost::system::error_code &error)
   {{{
     if (error) {
+      message_prepare(ERROR, SERVER_ERROR, UPDATE, data_t {"Unknown error occured"});
+      async_send(message_out_);
+
       log(mazed::log_level::ERROR, error.message().c_str());
       terminate();
+
       return;
     }
 
@@ -497,11 +501,11 @@ namespace mazed {
     // Testing the message received - the protocol expects only one actual message in client's request:
     if (messages_in_.size() != 1) {
       if (messages_in_.size() == 0) {
-        message_prepare(ERROR, EMPTY_MESSAGE, UPDATE);
+        message_prepare(ERROR, EMPTY_MESSAGE, UPDATE, data_t {"Empty message received"});
         log(mazed::log_level::ERROR, "Message with no content received");
       }
       else {
-        message_prepare(ERROR, MULTIPLE_MESSAGES, UPDATE);
+        message_prepare(ERROR, MULTIPLE_MESSAGES, UPDATE, data_t {"Multiple messages received"});
         log(mazed::log_level::ERROR, "Multiple messages received");
       }
       
@@ -548,9 +552,11 @@ namespace mazed {
   void client_handler::empty_handler(const boost::system::error_code &error)
   {{{
     if (error) {
+      message_prepare(ERROR, SERVER_ERROR, UPDATE, data_t {"Unknown error occured"});
+      async_send(message_out_);
+
       log(mazed::log_level::ERROR, error.message().c_str());
       terminate();
-      return;
     }
 
     return;   // Nothing to do - single message send.
@@ -564,7 +570,7 @@ namespace mazed {
    */
   void client_handler::SYN_handler()
   {{{
-    message_prepare(ERROR, WRONG_PROTOCOL, UPDATE);
+    message_prepare(ERROR, WRONG_PROTOCOL, UPDATE, data_t {"Wrong protocol usage - SYN received again"});
     log(mazed::log_level::ERROR, "SYN message received again");
     return;
   }}}
@@ -597,7 +603,7 @@ namespace mazed {
 
     if (mazes.size() == 0) {
       log(mazed::log_level::ERROR, "No available mazes to load/play");
-      message_prepare(ERROR, SERVER_ERROR, UPDATE, data_t {"Server is missing mazes for loading/playing"});
+      message_prepare(ERROR, SERVER_ERROR_INFO, UPDATE, data_t {"Server is missing mazes for loading/playing"});
     }
     else {
       message_prepare(CTRL, LIST_MAZES, ACK, mazes);
@@ -689,7 +695,7 @@ namespace mazed {
         break;
 
       case ALREADY_PLAYED :
-        message_prepare(ERROR, WRONG_PROTOCOL, UPDATE);
+        message_prepare(ERROR, WRONG_PROTOCOL, UPDATE, data_t {"Wrong protocol usage - ALREADY_PLAYED received"});
         log(mazed::log_level::ERROR, "From client: ALREADY PLAYED received");
         break;
 
@@ -698,7 +704,7 @@ namespace mazed {
         break;
 
       default :
-        message_prepare(ERROR, WRONG_PROTOCOL, UPDATE);
+        message_prepare(ERROR, WRONG_PROTOCOL, UPDATE, data_t {"Unknown version of the protocol"});
         log(mazed::log_level::ERROR, "Error type value overflow");
         break;
     };
