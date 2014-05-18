@@ -556,15 +556,15 @@ namespace client {
 
     available_saves_ = message_in_.data;        // Make a backup for when user selects a save game to load.
 
-    if (available_saves_.size() == 0) {
-      p_interface_->display_message("You have no saved games");
-      return;
-    }
-
     p_interface_->display_message("×--------------------------×");
     p_interface_->display_message("| Saves available to load: |");
     p_interface_->display_message("×--------------------------×");
     
+    if (available_saves_.size() == 0) {
+      p_interface_->display_message(" · No available saves found...");
+      return;
+    }
+
     for (std::size_t i = 0; i < available_saves_.size(); i++) {
       p_interface_->display_message("  [" + std::to_string(i + 1) + "] " + available_saves_[i]);
     }

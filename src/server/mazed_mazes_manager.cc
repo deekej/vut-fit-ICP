@@ -15,6 +15,7 @@
  ~ ~~~[ HEADER FILES ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
  * ****************************************************************************************************************** */
 
+#include <list>
 #include <tuple>
 
 
@@ -65,7 +66,7 @@ namespace mazed {
 
   std::vector<std::string> mazes_manager::list_directory(filesys::path dir_path, std::string extension)
   {{{
-    std::vector<std::string> files;
+    std::list<std::string> files;
     
     try {
       filesys::current_path(dir_path);
@@ -77,7 +78,7 @@ namespace mazed {
 
       std::size_t ext_length {extension.length()};
 
-      for (filesys::directory_iterator it_dir(filesys::current_path()); it_dir != it_dir_end; it_dir++) {
+      for (filesys::directory_iterator it_dir("."); it_dir != it_dir_end; it_dir++) {
 
         if (filesys::is_regular_file(it_dir->path(), error) == true && !error) {
           fname = it_dir->path().filename().native();
@@ -93,8 +94,10 @@ namespace mazed {
         }
 
       }
+      
+      files.sort();
 
-      return files;
+      return {std::make_move_iterator(std::begin(files)), std::make_move_iterator(std::end(files))};
     }
     catch (filesys::filesystem_error) {
       return {};
