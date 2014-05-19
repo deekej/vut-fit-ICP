@@ -31,9 +31,6 @@
  ~ ~~~[ MEMBER FUNCTIONS IMPLEMENTATIONS ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
  * ****************************************************************************************************************** */
 
-// Typedef to save space when sending text messages to the client:
-using data_t = std::vector<std::string>;
-
 namespace mazed {
   client_handler::client_handler(tcp::socket &socket, asio::io_service &io_service, mazed::settings_tuple &settings,
                                  const std::shared_ptr<mazed::shared_resources> ptr, unsigned connection_num) :
