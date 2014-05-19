@@ -28,6 +28,8 @@ namespace game {
     public:
       enum E_block_type {
         EMPTY = 0,
+        PLAYER,
+        PLAYER_ON_GATE,
         WALL,
         GOAL,
         GATE_CLOSED,
