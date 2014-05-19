@@ -28,6 +28,7 @@
 
 namespace game {
   class basic_guardian {
+    protected:
       std::pair<unsigned char, unsigned char>     coords_;
 
     public:

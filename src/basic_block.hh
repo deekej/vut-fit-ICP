@@ -31,7 +31,7 @@ namespace game {
         PLAYER,
         PLAYER_ON_GATE,
         WALL,
-        GOAL,
+        TARGET,
         GATE_CLOSED,
         GATE_OPEN,
         KEY,

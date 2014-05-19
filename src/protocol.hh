@@ -126,8 +126,9 @@ namespace protocol {
   // // // // // // // // // // // // // // // //
  
   struct game_data {
-    std::string         maze_scheme;
-    long                game_speed;
+    std::pair<unsigned char, unsigned char>       dimensions;
+    std::string                                   maze_scheme;
+    long                                          game_speed;
 
     template <typename Archive>
     void serialize(Archive &ar, const unsigned int version __attribute__((unused)))

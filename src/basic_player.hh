@@ -28,28 +28,38 @@
 
 namespace game {
   class basic_player {
+    protected:
       std::string                                 nick_;
       unsigned char                               player_num_;
       unsigned char                               lifes_;
       std::pair<unsigned char, unsigned char>     coords_;
       bool                                        has_key_ {false};
-
-      static unsigned long                        players_counter_;
   
     public:
-      basic_player() : player_num_{0}, lifes_{3}
+      basic_player() : nick_{"player-N/A"}, player_num_{0}, lifes_{3}
       {{{
-        players_counter_++;
-        nick_ = "player_" + std::to_string(players_counter_);
-
         return;
       }}}
+
 
       basic_player(const std::string &nick) : nick_{nick}, player_num_{0}, lifes_{3}
       {{{
-        players_counter_++;
         return;
       }}}
+
+
+      basic_player(const std::string &nick, unsigned char player_num) : nick_{nick}, player_num_{player_num}, lifes_{3}
+      {{{
+        return;
+      }}}
+
+
+      basic_player(const std::string &nick, unsigned char player_num, unsigned char lifes) :
+        nick_{nick}, player_num_{player_num}, lifes_{lifes}
+      {{{
+        return;
+      }}}
+
 
       virtual ~basic_player()
       {{{
@@ -63,16 +73,27 @@ namespace game {
         return nick_;
       }}}
 
+
       virtual void set_nick(const std::string &nick)
       {{{
         nick_ = nick;
         return;
       }}}
 
+
       virtual unsigned char get_lifes()
       {{{
         return lifes_;
       }}}
+      
+
+      virtual void set_lifes(unsigned char lifes)
+      {{{
+        lifes_ = lifes;
+
+        return;
+      }}}
+
 
       virtual void decr_lifes()
       {{{
@@ -83,8 +104,6 @@ namespace game {
         return;
       }}}
   };
-
-  unsigned long basic_player::players_counter_ = 0;
 }
 
 /* ****************************************************************************************************************** *
