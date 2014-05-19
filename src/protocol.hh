@@ -39,8 +39,8 @@ namespace protocol {
     NOT_POSSIBLE,
   };
   
-  /**
-   *  Update message send to client's game instance: 
+  /** FIXME: These needs some serious updates!
+   * Update message send to client's game instance: 
    */
   struct update {
     // long long           update_num;         // Sequence number - disabled for now.
@@ -50,14 +50,17 @@ namespace protocol {
 
     std::vector<std::pair<unsigned char, unsigned char>>  coords;   // Coordinates of each character.
 
-    template <typename Archive> void serialize(Archive &ar, const unsigned int version __attribute__((unused)))
-    {
+    template <typename Archive>
+    void serialize(Archive &ar, const unsigned int version __attribute__((unused)))
+    {{{
       // ar & update_num;
       ar & last_move;
       ar & players_count;
       ar & guardians_count;
       ar & coords;
-    }
+
+      return;
+    }}}
   };
 
   // // // // // // // // // // // // // // // //
@@ -74,14 +77,17 @@ namespace protocol {
   
   // Command issued by the player:
   struct command {
-    // unsigned char player_num;
+    unsigned char player_num;
     enum E_user_command cmd;
 
-    template <typename Archive> void serialize(Archive &ar, const unsigned int version __attribute__((unused)))
-    {
-      // ar & player_num;
+    template <typename Archive>
+    void serialize(Archive &ar, const unsigned int version __attribute__((unused)))
+    {{{
+      ar & player_num;
       ar & cmd;
-    }
+
+      return;
+    }}}
   };
 
   // // // // // // // // // // // // // // // //
@@ -104,16 +110,35 @@ namespace protocol {
   
     std::vector<std::string> players;
 
-    template <typename Archive> void serialize(Archive &ar, const unsigned int version __attribute__((unused)))
-    {
+    template <typename Archive>
+    void serialize(Archive &ar, const unsigned int version __attribute__((unused)))
+    {{{
       ar & used_slots;
       ar & status;
       ar & UID;
       ar & maze_name;
       ar & players;
-    }
+
+      return;
+    }}}
   };
 
+  // // // // // // // // // // // // // // // //
+ 
+  struct game_data {
+    std::string         maze_scheme;
+    long                game_speed;
+
+    template <typename Archive>
+    void serialize(Archive &ar, const unsigned int version __attribute__((unused)))
+    {{{
+      ar & maze_scheme;
+      ar & game_speed;
+
+      return;
+    }}}
+  };
+ 
   // // // // // // // // // // // // // // // //
 
   enum E_type {
@@ -201,8 +226,9 @@ namespace protocol {
 
     std::vector<std::string> data;
 
-    template <typename Archive> void serialize(Archive &ar, const unsigned int version __attribute__((unused)))
-    {
+    template <typename Archive>
+    void serialize(Archive &ar, const unsigned int version __attribute__((unused)))
+    {{{
       ar & type;
       
       switch (type) {
@@ -225,7 +251,9 @@ namespace protocol {
 
       ar & status;
       ar & data;
-    }
+
+      return;
+    }}}
   };
 }
 
