@@ -27,6 +27,7 @@
 
 namespace game {
   class basic_maze {
+    protected:
       std::string                               name_;
       std::pair<unsigned char, unsigned char>   dimensions_;
 
