@@ -25,6 +25,7 @@
 
 namespace game {
   class basic_block {
+    public:
       enum E_block_type {
         EMPTY = 0,
         WALL,
@@ -32,7 +33,10 @@ namespace game {
         GATE_CLOSED,
         GATE_OPEN,
         KEY,
-      } type_;
+      };
+
+    protected:
+      enum E_block_type type_;
 
     public:
       basic_block() : type_{EMPTY}
