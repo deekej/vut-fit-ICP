@@ -385,9 +385,28 @@ namespace client {
 
   void mediator::CMD_GAME_START_handler()
   {{{
-    p_interface_->display_message("Command not implemented yet, sorry.");
+    if (available_mazes_.size() == 0) {
+      p_interface_->display_message("INFO: Now mazes list downloaded yet, write 'list-mazes' to update it");
+      return;
+    }
 
-    return;
+    try {
+      std::size_t maze_number = std::stoul(additional_data_);
+      
+      if (maze_number == 0 || maze_number > available_mazes_.size()) {
+        p_interface_->display_message("INFO: No available maze with number: " + additional_data_);
+        return;
+      }
+
+      maze_number--;
+
+      message_prepare(CTRL, CREATE_GAME, QUERY, data_t {available_mazes_[maze_number]});
+      message_send();
+      return;
+    }
+    catch (std::exception) {
+      p_interface_->display_message("INFO: '" + additional_data_ + "' is not a valid number, please, try again");
+    }
   }}}
 
 

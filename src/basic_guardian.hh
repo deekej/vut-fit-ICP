@@ -37,6 +37,11 @@ namespace game {
         return;
       }}}
 
+      basic_guardian(unsigned char row, unsigned char column) : coords_(row, column)
+      {{{
+        return;
+      }}}
+
       virtual ~basic_guardian()
       {{{
         return;

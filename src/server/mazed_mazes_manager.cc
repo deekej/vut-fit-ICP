@@ -15,9 +15,14 @@
  ~ ~~~[ HEADER FILES ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
  * ****************************************************************************************************************** */
 
+#include <fstream>
 #include <list>
+#include <sstream>
+#include <string>
 #include <tuple>
+#include <vector>
 
+#include <boost/algorithm/string.hpp>
 
 #include "mazed_mazes_manager.hh"
 
@@ -59,6 +64,149 @@ namespace mazed {
     }
     catch (filesys::filesystem_error) {
       return {};
+    }
+  }}}
+
+  game::maze *mazes_manager::load_maze(const std::string &maze_name)
+  {{{
+    try {
+      filesys::current_path(daemon_dir_path_);
+      filesys::current_path(mazes_dir_path_);
+      
+      std::ifstream maze_file(maze_name);
+
+      if (maze_file.fail() == true) {
+        return NULL;
+      }
+
+
+      std::string input, version;
+      std::vector<std::string> input_tokens;
+      std::size_t rows, cols;
+      std::stringstream maze_scheme;
+
+      game::maze *p_maze = NULL;
+
+
+      std::getline(maze_file, input);
+
+      if (maze_file.good() != true) {
+        return NULL;
+      }
+
+      boost::split(input_tokens, input, boost::is_any_of("="));
+      
+      if (input_tokens.size() != 2 || input_tokens[0] != "version") {
+        return NULL;
+      }
+
+      version = input_tokens[1];
+      std::getline(maze_file, input);
+      
+      if (maze_file.good() != true) {
+        return NULL;
+      }
+
+      boost::split(input_tokens, input, boost::is_any_of("=xX"));
+
+      if (input_tokens.size() != 3 || input_tokens[0] != "size") {
+        return NULL;
+      }
+      
+      rows = std::stoul(input_tokens[1], nullptr, 0);
+      cols = std::stoul(input_tokens[2], nullptr, 0);
+
+      if (rows < MAZE_MIN_SIZE || rows > MAZE_MAX_SIZE || cols < MAZE_MIN_SIZE || cols > MAZE_MAX_SIZE) {
+        return NULL;
+      }
+
+      std::getline(maze_file, input);             // Skipping the line delimiter.
+
+      if (maze_file.good() != true) {
+        return NULL;
+      }
+      
+      
+      for (std::size_t i = 0; i < rows; i++) {
+        std::getline(maze_file, input);
+
+        if (maze_file.good() != true || input.size() != (cols * 2 - 1)) {
+          return NULL;
+        }
+
+        maze_scheme << input << " ";
+      }
+
+
+      input = maze_scheme.str();
+      p_maze = new game::maze(static_cast<unsigned char>(rows), static_cast<unsigned char>(cols), input);
+      
+
+      for (std::size_t i = 0; i < rows; i++) {
+        for (std::size_t j = 0; j < cols; j++) {
+          switch (input[i * cols * 2 + j * 2]) {
+            case ' ' :
+              p_maze->matrix_[i][j].set(game::block::EMPTY);
+              break;
+
+            case 'X' :
+              p_maze->matrix_[i][j].set(game::block::WALL);
+              break;
+
+            case '~' :
+              p_maze->matrix_[i][j].set(game::block::GATE_CLOSED);
+              p_maze->gates_.emplace_back(&p_maze->matrix_[i][j]);
+              break;
+
+            case '*' :
+              p_maze->matrix_[i][j].set(game::block::KEY);
+              break;
+
+            case 'G' :
+              p_maze->matrix_[i][j].set(game::block::TARGET);
+              break;
+            
+            case '1' :
+              p_maze->players_start_coords_[0].first = i;
+              p_maze->players_start_coords_[0].second = j;
+              break;
+              
+            case '2' :
+              p_maze->players_start_coords_[1].first = i;
+              p_maze->players_start_coords_[1].second = j;
+              break;
+              
+            case '3' :
+              p_maze->players_start_coords_[2].first = i;
+              p_maze->players_start_coords_[2].second = j;
+              break;
+              
+            case '4' :
+              p_maze->players_start_coords_[3].first = i;
+              p_maze->players_start_coords_[3].second = j;
+              break;
+              
+            case '@' :
+              p_maze->guardians_.emplace_back(i, j, p_maze);
+              break;
+
+            default :
+              delete p_maze;
+              return NULL;
+          }
+        }
+      }
+
+      p_maze->maze_version_ = version;
+      p_maze->maze_scheme_ = input;
+
+      return p_maze;
+    }
+    catch (filesys::filesystem_error) {
+      return NULL;
+    }
+    catch (std::exception) {
+      return NULL;
     }
   }}}
 
