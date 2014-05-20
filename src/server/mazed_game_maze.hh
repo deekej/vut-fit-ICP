@@ -23,8 +23,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include <boost/numeric/ublas/matrix.hpp>
-
 #include "mazed_game_globals.hh"
 #include "mazed_game_block.hh"
 #include "mazed_game_guardian.hh"
@@ -52,34 +50,35 @@ namespace game {
       friend class mazed::mazes_manager;
       friend class game::player;
       friend class game::guardian;
+      // game_instance
 
       // // // // // // // // // // //
 
       using uchar_t = unsigned char;
 
       boost::mutex                                              access_mutex_;
-
+    
       long                                                      game_speed_;
       std::string                                               game_owner_;
       std::string                                               maze_scheme_;
+      std::string                                               maze_version_;
 
       game::players_list                                        players_;
       std::unordered_map<std::string, uchar_t>                  previous_players_;
 
-      std::array<std::pair<uchar_t, uchar_t>, GAME_MAX_PLAYERS> starting_coords_;
-      std::array<std::pair<uchar_t, uchar_t>, GAME_MAX_PLAYERS> saved_coords_;
+      std::array<std::pair<uchar_t, uchar_t>, GAME_MAX_PLAYERS> players_start_coords_;
+      std::array<std::pair<uchar_t, uchar_t>, GAME_MAX_PLAYERS> players_saved_coords_;
       
       std::vector<game::guardian>                               guardians_;
       std::vector<game::block *>                                gates_;
-
-      boost::numeric::ublas::matrix<game::block>                matrix_;
+      std::vector<std::vector<game::block>>                     matrix_;
 
       // // // // // // // // // // //
       
     public:
-      maze(uchar_t row_num, uchar_t col_num, std::string &scheme) :
+      maze(uchar_t row_num, uchar_t col_num, const std::string &scheme) :
         basic_maze(row_num, col_num),
-        maze_scheme_{scheme}, matrix_(row_num, col_num)
+        maze_scheme_{scheme}, matrix_(row_num, std::vector<game::block>(col_num))
       {{{
         return;
       }}}

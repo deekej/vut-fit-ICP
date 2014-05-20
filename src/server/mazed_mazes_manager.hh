@@ -25,6 +25,7 @@
 #include <boost/filesystem.hpp>
 
 #include "mazed_globals.hh"
+#include "mazed_game_maze.hh"
 
 
 /* ****************************************************************************************************************** *
@@ -55,6 +56,8 @@ namespace mazed {
 
       std::vector<std::string> list_mazes();
       std::vector<std::string> list_saves();
+
+      game::maze *load_maze(const std::string &maze_name);
   };
 }
 

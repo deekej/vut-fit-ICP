@@ -41,6 +41,8 @@ namespace client {
    * processes.
    */
   class mediator {
+      using data_t = std::vector<std::string>;    // For shorter message preparing for server.
+
       client::tcp_connection                      *p_tcp_connect_ {NULL};
       // client::udp_connection                      *p_udp_connect_ {NULL};
 
