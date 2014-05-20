@@ -1,24 +1,24 @@
 /**
- * @file      basic_maze.hh
+ * @file      mazed_game_guardian.hh
  * @author    Dee'Kej (David Kaspar - xkaspa34)
  * @version   1.0
- * @brief     Game's maze basic class to be derived from.
+ * @brief     Contains a specialization of the guardian class to be used on server-side.
  */
 
 
 /* ****************************************************************************************************************** *
- * ***[ START OF BASIC_MAZE.HH ]************************************************************************************* *
+ * ***[ START OF MAZED_GAME_GUARDIAN.HH ]**************************************************************************** *
  * ****************************************************************************************************************** */
 
-#ifndef H_GUARD_BASIC_MAZE_HH
-#define H_GUARD_BASIC_MAZE_HH
+#ifndef H_GUARD_MAZED_GAME_GUARDIAN_HH
+#define H_GUARD_MAZED_GAME_GUARDIAN_HH
 
 
 /* ****************************************************************************************************************** *
  ~ ~~~[ HEADER FILES ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
  * ****************************************************************************************************************** */
 
-#include <utility>
+#include "../basic_guardian.hh"
 
 
 /* ****************************************************************************************************************** *
@@ -26,23 +26,19 @@
  * ****************************************************************************************************************** */
 
 namespace game {
-  class basic_maze {
-    protected:
-      std::string                               name_;
-      std::pair<unsigned char, unsigned char>   dimensions_;
 
+  /**
+   * Specialization of the guardian, which encapsulates the AI and can therefore act autonomously.
+   */
+  class guardian : public basic_guardian {
+      // TODO
     public:
-      basic_maze() : dimensions_(0, 0)
+      guardian()
       {{{
         return;
       }}}
 
-      basic_maze(unsigned char row_size, unsigned char col_size) : dimensions_(row_size, col_size)
-      {{{
-        return;
-      }}}
-
-      virtual ~basic_maze()
+      ~guardian()
       {{{
         return;
       }}}
@@ -50,7 +46,7 @@ namespace game {
 }
 
 /* ****************************************************************************************************************** *
- * ***[ END OF BASIC_MAZE.HH ]*************************************************************************************** *
+ * ***[ END OF MAZED_GAME_GUARD.HH ]********************************************************************************* *
  * ****************************************************************************************************************** */
 
 #endif

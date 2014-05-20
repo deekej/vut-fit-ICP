@@ -1,56 +1,57 @@
 /**
- * @file      basic_maze.hh
+ * @file      mazed_game_block.hh
  * @author    Dee'Kej (David Kaspar - xkaspa34)
- * @version   1.0
- * @brief     Game's maze basic class to be derived from.
+ * @version   0.1
+ * @brief     Contains class of game block for server-side purposes.
  */
 
 
 /* ****************************************************************************************************************** *
- * ***[ START OF BASIC_MAZE.HH ]************************************************************************************* *
+ * ***[ START OF MAZED_GAME_BLOCK.HH ]******************************************************************************* *
  * ****************************************************************************************************************** */
 
-#ifndef H_GUARD_BASIC_MAZE_HH
-#define H_GUARD_BASIC_MAZE_HH
+#ifndef H_GUARD_MAZED_GAME_BLOCK_HH
+#define H_GUARD_MAZED_GAME_BLOCK_HH
 
 
 /* ****************************************************************************************************************** *
  ~ ~~~[ HEADER FILES ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
  * ****************************************************************************************************************** */
 
-#include <utility>
+#include <vector>
+
+#include "mazed_game_player.hh"
+#include "../basic_block.hh"
 
 
 /* ****************************************************************************************************************** *
- ~ ~~~[ BASIC_MAZE CLASS ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
+ ~ ~~~[ BLOCK CLASS ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
  * ****************************************************************************************************************** */
 
 namespace game {
-  class basic_maze {
-    protected:
-      std::string                               name_;
-      std::pair<unsigned char, unsigned char>   dimensions_;
+  /**
+   * Class of game block for server-side purposes.
+   */
+  class block : public basic_block {
+      // Normally, list might be better, but the maximum size of the vector will be 4 - this is acceptable:
+      std::vector<game::player *>       *p_players_ {NULL};
 
     public:
-      basic_maze() : dimensions_(0, 0)
+      block() : basic_block()
       {{{
         return;
       }}}
 
-      basic_maze(unsigned char row_size, unsigned char col_size) : dimensions_(row_size, col_size)
+      ~block()
       {{{
-        return;
-      }}}
-
-      virtual ~basic_maze()
-      {{{
+        delete p_players_;
         return;
       }}}
   };
 }
 
 /* ****************************************************************************************************************** *
- * ***[ END OF BASIC_MAZE.HH ]*************************************************************************************** *
+ * ***[ END OF MAZED_GAME_BLOCK.HH ]********************************************************************************* *
  * ****************************************************************************************************************** */
 
 #endif
