@@ -18,6 +18,7 @@
  ~ ~~~[ HEADER FILES ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
  * ****************************************************************************************************************** */
 
+#include "mazed_game_maze.hh"
 #include "../basic_guardian.hh"
 
 
@@ -27,13 +28,23 @@
 
 namespace game {
 
+  class maze;
+
   /**
    * Specialization of the guardian, which encapsulates the AI and can therefore act autonomously.
    */
   class guardian : public basic_guardian {
-      // TODO
+      std::pair<unsigned char, unsigned char>     start_coords_;
+      game::maze                                  *p_maze_;
     public:
       guardian()
+      {{{
+        return;
+      }}}
+
+      guardian(unsigned char row, unsigned char column, game::maze *ptr) :
+        basic_guardian(row, column),
+        start_coords_(row, column), p_maze_{ptr}
       {{{
         return;
       }}}
@@ -41,6 +52,12 @@ namespace game {
       ~guardian()
       {{{
         return;
+      }}}
+
+      void set_coords(unsigned char row, unsigned char column)
+      {{{
+        coords_.first = row;
+        coords_.second = column;
       }}}
   };
 }

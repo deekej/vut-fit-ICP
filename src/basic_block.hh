@@ -50,10 +50,21 @@ namespace game {
       {{{
         return;
       }}}
-            
+
       virtual ~basic_block()
       {{{
         return;
+      }}}
+
+      void set(E_block_type type)
+      {{{
+        type_ = type;
+        return;
+      }}}
+
+      E_block_type get()
+      {{{
+        return type_;
       }}}
   };
 }

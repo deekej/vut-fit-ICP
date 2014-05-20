@@ -27,6 +27,7 @@
 
 #include "mazed_globals.hh"
 #include "mazed_shared_resources.hh"
+#include "mazed_game_maze.hh"
 #include "../protocol.hh"
 
 
