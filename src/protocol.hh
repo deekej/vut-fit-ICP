@@ -70,6 +70,7 @@ namespace protocol {
     RIGHT,
     UP,
     DOWN,
+    STOP,
     TAKE_OPEN,
     START_CONTINUE,
     PAUSE,

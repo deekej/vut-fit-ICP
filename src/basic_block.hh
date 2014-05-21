@@ -61,11 +61,6 @@ namespace game {
         type_ = type;
         return;
       }}}
-
-      E_block_type get()
-      {{{
-        return type_;
-      }}}
   };
 }
 

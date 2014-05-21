@@ -28,8 +28,8 @@
 namespace game {
   class basic_maze {
     protected:
-      std::string                               name_;
-      std::pair<unsigned char, unsigned char>   dimensions_;
+      std::string                                 name_;
+      std::pair<signed char, signed char>         dimensions_;
 
     public:
       basic_maze() : dimensions_(0, 0)
@@ -37,7 +37,7 @@ namespace game {
         return;
       }}}
 
-      basic_maze(unsigned char row_size, unsigned char col_size) : dimensions_(row_size, col_size)
+      basic_maze(signed char row_size, signed char col_size) : dimensions_(row_size, col_size)
       {{{
         return;
       }}}

@@ -34,7 +34,7 @@ namespace game {
    * Specialization of the guardian, which encapsulates the AI and can therefore act autonomously.
    */
   class guardian : public basic_guardian {
-      std::pair<unsigned char, unsigned char>     start_coords_;
+      std::pair<signed char, signed char>         start_coords_;
       game::maze                                  *p_maze_;
     public:
       guardian()
@@ -42,7 +42,7 @@ namespace game {
         return;
       }}}
 
-      guardian(unsigned char row, unsigned char column, game::maze *ptr) :
+      guardian(signed char row, signed char column, game::maze *ptr) :
         basic_guardian(row, column),
         start_coords_(row, column), p_maze_{ptr}
       {{{
@@ -54,7 +54,7 @@ namespace game {
         return;
       }}}
 
-      void set_coords(unsigned char row, unsigned char column)
+      void set_coords(signed char row, signed char column)
       {{{
         coords_.first = row;
         coords_.second = column;

@@ -47,7 +47,7 @@ namespace game {
       unsigned char                               invulnerability_ {3};
 
       // Coordinates for player so he known where to respawn after he has been killed:
-      std::pair<unsigned char, unsigned char>     start_coords_;
+      std::pair<signed char, signed char>         start_coords_;
 
     public:
       player() : basic_player()

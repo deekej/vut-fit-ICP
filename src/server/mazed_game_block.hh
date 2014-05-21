@@ -47,6 +47,11 @@ namespace game {
         delete p_players_;
         return;
       }}}
+
+      E_block_type get()
+      {{{
+        return type_;
+      }}}
   };
 }
 
