@@ -28,6 +28,7 @@
 #include "mazed_game_guardian.hh"
 #include "mazed_game_player.hh"
 #include "mazed_game_players_list.hh"
+#include "../protocol.hh"
 #include "../basic_maze.hh"
 
 
@@ -54,7 +55,7 @@ namespace game {
 
       // // // // // // // // // // //
 
-      using uchar_t = unsigned char;
+      using schar_t = signed char;
 
       boost::mutex                                              access_mutex_;
     
@@ -64,10 +65,10 @@ namespace game {
       std::string                                               maze_version_;
 
       game::players_list                                        players_;
-      std::unordered_map<std::string, uchar_t>                  previous_players_;
+      std::unordered_map<std::string, schar_t>                  previous_players_;
 
-      std::array<std::pair<uchar_t, uchar_t>, GAME_MAX_PLAYERS> players_start_coords_;
-      std::array<std::pair<uchar_t, uchar_t>, GAME_MAX_PLAYERS> players_saved_coords_;
+      std::array<std::pair<schar_t, schar_t>, GAME_MAX_PLAYERS> players_start_coords_;
+      std::array<std::pair<schar_t, schar_t>, GAME_MAX_PLAYERS> players_saved_coords_;
       
       std::vector<game::guardian>                               guardians_;
       std::vector<game::block *>                                gates_;
@@ -76,7 +77,7 @@ namespace game {
       // // // // // // // // // // //
       
     public:
-      maze(uchar_t row_num, uchar_t col_num, const std::string &scheme) :
+      maze(schar_t row_num, schar_t col_num, const std::string &scheme) :
         basic_maze(row_num, col_num),
         maze_scheme_{scheme}, matrix_(row_num, std::vector<game::block>(col_num))
       {{{
@@ -86,6 +87,37 @@ namespace game {
       ~maze()
       {{{
         return;
+      }}}
+
+      bool is_move_possible(schar_t row_coord, schar_t col_coord, protocol::E_user_command command)
+      {{{
+        switch (command) {
+          case protocol::E_user_command::LEFT :
+            col_coord--;
+            break;
+
+          case protocol::E_user_command::RIGHT :
+            col_coord++;
+            break;
+
+          case protocol::E_user_command::UP :
+            row_coord--;
+            break;
+
+          case protocol::E_user_command::DOWN :
+            row_coord++;
+            break;
+
+          case protocol::E_user_command::STOP :
+            return true;
+
+          default :
+            return false;
+        }
+
+        game::block::E_block_type block = matrix_[row_coord % dimensions_.first][col_coord % dimensions_.second].get();
+
+        return (block == game::block::WALL || block == game::block::GATE_CLOSED) ? false : true;
       }}}
   };
 }

@@ -36,10 +36,10 @@ build/mazed_server.o: mazed_server.cc mazed_server.hh mazed_globals.hh mazed_sha
 build/mazed_server_connection.o: mazed_server_connection.cc mazed_server_connection.hh mazed_globals.hh mazed_cl_handler.hh
 	$(CXX) $(CXXFLAGS) -o $@ -c mazed_server_connection.cc
 
-build/mazed_cl_handler.o: mazed_cl_handler.cc mazed_cl_handler.hh mazed_globals.hh mazed_shared_resources.hh ../serialization.hh ../protocol.hh
+build/mazed_cl_handler.o: mazed_cl_handler.cc mazed_cl_handler.hh mazed_globals.hh mazed_shared_resources.hh mazed_game_maze.hh ../serialization.hh ../protocol.hh
 	$(CXX) $(CXXFLAGS) -o $@ -c mazed_cl_handler.cc
 
-build/mazed_mazes_manager.o: mazed_mazes_manager.cc mazed_mazes_manager.hh mazed_globals.hh
+build/mazed_mazes_manager.o: mazed_mazes_manager.cc mazed_mazes_manager.hh mazed_globals.hh mazed_game_maze.hh
 	$(CXX) $(CXXFLAGS) -o $@ -c mazed_mazes_manager.cc
 
 ############################################################

@@ -139,7 +139,7 @@ namespace mazed {
 
 
       input = maze_scheme.str();
-      p_maze = new game::maze(static_cast<unsigned char>(rows), static_cast<unsigned char>(cols), input);
+      p_maze = new game::maze(static_cast<signed char>(rows), static_cast<signed char>(cols), input);
       
 
       for (std::size_t i = 0; i < rows; i++) {

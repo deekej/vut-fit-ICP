@@ -29,15 +29,15 @@
 namespace game {
   class basic_guardian {
     protected:
-      std::pair<unsigned char, unsigned char>     coords_;
+      std::pair<signed char, signed char>         coords_;
 
     public:
-      basic_guardian() : coords_(std::numeric_limits<unsigned char>::max(), std::numeric_limits<unsigned char>::max())
+      basic_guardian() : coords_(std::numeric_limits<signed char>::max(), std::numeric_limits<signed char>::max())
       {{{
         return;
       }}}
 
-      basic_guardian(unsigned char row, unsigned char column) : coords_(row, column)
+      basic_guardian(signed char row, signed char column) : coords_(row, column)
       {{{
         return;
       }}}

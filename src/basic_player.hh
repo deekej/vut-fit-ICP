@@ -32,7 +32,7 @@ namespace game {
       std::string                                 nick_;
       unsigned char                               player_num_;
       unsigned char                               lifes_;
-      std::pair<unsigned char, unsigned char>     coords_;
+      std::pair<signed char, signed char>         coords_;
       bool                                        has_key_ {false};
   
     public:
