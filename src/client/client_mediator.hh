@@ -44,8 +44,6 @@ namespace client {
       using data_t = std::vector<std::string>;    // For shorter message preparing for server.
 
       client::tcp_connection                      *p_tcp_connect_ {NULL};
-      // client::udp_connection                      *p_udp_connect_ {NULL};
-
       ABC::user_interface                         *p_interface_ {NULL};
 
       protocol::message                           message_in_;

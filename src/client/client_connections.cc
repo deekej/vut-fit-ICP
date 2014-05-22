@@ -22,7 +22,7 @@
 
 
 /* ****************************************************************************************************************** *
- ~ ~~~[ CONNECTIONS CLASSES ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
+ ~ ~~~[ TCP_CONNECTION IMPLEMENTATIONS ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
  * ****************************************************************************************************************** */
 
 namespace client {
@@ -41,11 +41,11 @@ namespace client {
                                  boost::condition_variable &action_req, boost::mutex &action_req_mutex, bool &flag,
                                  boost::barrier &barrier) :
     connection(std::get<IPv4_ADDRESS>(settings), std::get<SERVER_PORT>(settings)),
+    timeout_in_(io_service_), timeout_out_(io_service_),
     message_in_{msg_storage}, action_req_{action_req}, action_req_mutex_{action_req_mutex}, new_message_flag_{flag},
     init_barrier_{barrier}, settings_{settings}
   {{{
-    // We're preparing the serialization and SYN message in advance so we can run HANDSHAKE right after connecting:
-    pu_tcp_connect_ = std::unique_ptr<protocol::tcp_serialization>(new protocol::tcp_serialization(socket_));
+    messages_out_.resize(1);    // Avoiding segmentation fault.
 
     messages_out_[0].type = protocol::E_type::CTRL;
     messages_out_[0].ctrl_type = protocol::E_ctrl_type::SYN;
@@ -59,7 +59,6 @@ namespace client {
     FIN_packet_.type = protocol::E_type::CTRL;
     FIN_packet_.ctrl_type = protocol::E_ctrl_type::FIN;
     FIN_packet_.status = protocol::E_status::UPDATE;
-
 
     return;
   }}}
@@ -614,7 +613,6 @@ namespace client {
       }
       action_req_mutex_.unlock();
 
-      async_receive();
       return;
     }
     // Do not bother the client with HELLO packets - we can handle them ourselves:
@@ -666,6 +664,216 @@ namespace client {
     async_receive();
 
     return;
+  }}}
+}
+
+
+/* ****************************************************************************************************************** *
+ ~ ~~~[ GAME_CONNECTION IMPLEMENTATIONS ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
+ * ****************************************************************************************************************** */
+
+namespace client {
+  game_connection::game_connection(const std::string IP_address, const std::string port,
+                                   protocol::update &update_storage, boost::condition_variable &update_cond_var,
+                                   boost::mutex &update_mutex, protocol::message &error_msg_storage,
+                                   bool &error_flag) : connection(IP_address, port),
+    update_in_{update_storage}, update_in_action_{update_cond_var}, update_in_mutex_{update_mutex},
+    error_message_{error_msg_storage}, error_flag_{error_flag}
+  {{{
+    commands_out_.resize(1);
+    return;
+  }}}
+
+  
+  bool game_connection::connect()
+  {{{
+    assert(socket_.is_open() == false);
+
+    boost::system::error_code error;
+
+    it_endpoint_ = resolver_.resolve(query_, error);
+
+    if (error) {
+      error_message_.type = protocol::E_type::ERROR;
+      error_message_.error_type = protocol::E_error_type::CONNECTION_FAILED;
+      error_message_.status = protocol::E_status::LOCAL;
+      error_message_.data.push_back(error.message());
+
+      return false;
+    }
+
+    endpoint_ = *it_endpoint_;
+    socket_.connect(endpoint_, error);
+    
+    // Try other endpoints if they exist and error has occurred:
+    while (error && ++it_endpoint_ != boost::asio::ip::tcp::resolver::iterator()) {
+      socket_.close();
+      endpoint_ = *it_endpoint_;
+      socket_.connect(endpoint_, error);
+    }
+    
+    if (error) {
+      socket_.close();                  // Even upon error the socket remains open, free the resources.
+
+      error_message_.type = protocol::E_type::ERROR;
+      error_message_.error_type = protocol::E_error_type::CONNECTION_FAILED;
+      error_message_.status = protocol::E_status::LOCAL;
+      error_message_.data.push_back(error.message());
+
+      return false;
+    }
+    
+    // Successful connection, starting & detaching a new thread for ASYNC operations:
+    pu_asio_thread_ = std::unique_ptr<boost::thread>(new boost::thread(&game_connection::async_receive, this));
+    
+    return true;
+
+  }}}
+
+
+  bool game_connection::disconnect()
+  {{{
+    assert(socket_.is_open() == true);
+
+    // Closing the connection:
+    boost::system::error_code ignored_error;
+    socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignored_error);
+    socket_.cancel();
+    socket_.close();
+   
+    io_service_.stop();                   // Making sure no more computation is done by thread.
+
+    // We currently have a lock as a caller. We need to unlock to make sure the other thread doesn't get stuck waiting
+    // for the lock, which it uses:
+    update_in_mutex_.unlock();
+    {
+      // Join thread if it wasn't joined already:
+      if (pu_asio_thread_ && (*pu_asio_thread_).joinable() == true) {
+        (*pu_asio_thread_).join();
+        pu_asio_thread_ = NULL;           // Make sure we don't call .join() multiple times.
+      }
+    }
+    update_in_mutex_.lock();              // Acquire the lock back.
+
+    return true;
+  }}}
+
+
+  void game_connection::async_send(const protocol::command &cmd)
+  {{{
+    commands_out_[0] = cmd;
+    pu_tcp_connect_->async_write(commands_out_, boost::bind(&game_connection::async_send_handler, this,
+                                                            boost::asio::placeholders::error));
+    return;
+  }}}
+  
+
+  void game_connection::async_send_handler(const boost::system::error_code &error)
+  {{{
+    if (error) {
+      error_message_.type = protocol::E_type::ERROR;
+      error_message_.status = protocol::E_status::LOCAL;
+
+      switch (error.value()) {
+        case boost::asio::error::eof :
+          error_message_.error_type = protocol::E_error_type::CONNECTION_CLOSED;
+          error_message_.data.push_back("Connection closed by server");
+          break;
+
+        case boost::asio::error::operation_aborted :
+          error_message_.error_type = protocol::E_error_type::TIMEOUT;
+          error_message_.data.push_back("Connection to server has timed out");
+          error_message_.data.push_back("The connection has been closed");
+          break;
+
+        default :
+          error_message_.error_type = protocol::E_error_type::UNKNOWN_ERROR;
+          error_message_.data.push_back("While sending command: ");
+          error_message_.data.back().append(error.message());
+          error_message_.data.push_back("The connection has been closed");
+          break;
+      }
+
+      error_flag_ = true;
+      update_in_action_.notify_one();
+    }
+
+    return;
+  }}}
+
+
+  void game_connection::async_receive()
+  {{{
+    pu_tcp_connect_->async_read(updates_in_, boost::bind(&game_connection::async_receive_handler, this,
+                                                         boost::asio::placeholders::error));
+    return;
+  }}}
+  
+  
+  void game_connection::async_receive_handler(const boost::system::error_code &error)
+  {{{
+    if (error) {
+      error_message_.type = protocol::E_type::ERROR;
+      error_message_.status = protocol::E_status::LOCAL;
+
+      switch (error.value()) {
+        case boost::asio::error::eof :
+          error_message_.error_type = protocol::E_error_type::CONNECTION_CLOSED;
+          error_message_.data.push_back("Connection closed by server");
+          break;
+
+        case boost::asio::error::operation_aborted :
+          error_message_.error_type = protocol::E_error_type::TIMEOUT;
+          error_message_.data.push_back("Connection to server has timed out");
+          error_message_.data.push_back("The connection has been closed");
+          break;
+
+        default :
+          error_message_.error_type = protocol::E_error_type::UNKNOWN_ERROR;
+          error_message_.data.push_back("While receiving update: ");
+          error_message_.data.back().append(error.message());
+          error_message_.data.push_back("The connection has been closed");
+          break;
+      }
+      
+      error_flag_ = true;
+      update_in_action_.notify_one();
+      
+      return;
+    }
+    // Testing the message received - the protocol expects only one actual message from server:
+    else if (updates_in_.size() != 1) {
+      error_message_.type = protocol::E_type::ERROR;
+      error_message_.status = protocol::E_status::LOCAL;
+
+      if (updates_in_.size() == 0) {
+        error_message_.error_type = protocol::E_error_type::EMPTY_MESSAGE;
+        error_message_.data.push_back("Message with empty content received");
+        error_message_.data.push_back("The connection has been closed");
+      }
+      else {
+        error_message_.error_type = protocol::E_error_type::MULTIPLE_MESSAGES;
+        error_message_.data.push_back("Wrong protocol - multiple messages received");
+        error_message_.data.push_back("The connection has been closed");
+      }
+
+      error_flag_ = true;
+      update_in_action_.notify_one();
+
+      return;
+    }
+    else {
+      //  Message has met all pre-conditions, prepare it for the game instance:
+      update_in_mutex_.lock();
+      {
+        update_in_ = updates_in_[0];
+        update_in_action_.notify_one();
+      }
+      update_in_mutex_.unlock();
+    
+      async_receive();
+      return;
+    }
   }}}
 }
 

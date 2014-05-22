@@ -99,7 +99,8 @@ namespace client {
               (this->*ctrl_message_handlers_[message_in_.ctrl_type])();
             }
             else {
-              // TODO: send message about wrong protocol
+              message_prepare(ERROR, WRONG_PROTOCOL, UPDATE);
+              message_send();
               display_error("Server is using wrong version of protocol, disconnecting...");
               p_tcp_connect_->disconnect();
             }
@@ -110,7 +111,8 @@ namespace client {
               (this->*info_message_handlers_[message_in_.info_type])();
             }
             else {
-              // TODO: send message about wrong protocol
+              message_prepare(ERROR, WRONG_PROTOCOL, UPDATE);
+              message_send();
               display_error("Server is using wrong version of protocol, disconnecting...");
               p_tcp_connect_->disconnect();
             }
