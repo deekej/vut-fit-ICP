@@ -43,21 +43,16 @@ namespace protocol {
    * Update message send to client's game instance: 
    */
   struct update {
-    // long long           update_num;         // Sequence number - disabled for now.
     enum E_move_result  last_move;
     unsigned char       players_count;      // Actual players count.
     unsigned char       guardians_count;    // Actual number of guardians.
 
-    std::vector<std::pair<unsigned char, unsigned char>>  coords;   // Coordinates of each character.
-
     template <typename Archive>
     void serialize(Archive &ar, const unsigned int version __attribute__((unused)))
     {{{
-      // ar & update_num;
       ar & last_move;
       ar & players_count;
       ar & guardians_count;
-      ar & coords;
 
       return;
     }}}
@@ -78,13 +73,13 @@ namespace protocol {
   
   // Command issued by the player:
   struct command {
-    unsigned char player_num;
+    // unsigned char player_num;
     enum E_user_command cmd;
 
     template <typename Archive>
     void serialize(Archive &ar, const unsigned int version __attribute__((unused)))
     {{{
-      ar & player_num;
+      // ar & player_num;
       ar & cmd;
 
       return;
