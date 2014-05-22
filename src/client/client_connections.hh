@@ -26,8 +26,14 @@
 
 namespace client {
   class tcp_connection : public ABC::connection {
-      std::unique_ptr<protocol::tcp_serialization>  pu_tcp_connect_;
-
+      // Messages timeout timers:
+      boost::asio::deadline_timer                   timeout_in_;
+      boost::asio::deadline_timer                   timeout_out_;
+      
+      // Messages buffers:
+      std::vector<protocol::message>                messages_in_;
+      std::vector<protocol::message>                messages_out_;
+      
       protocol::message                             &message_in_;
       boost::condition_variable                     &action_req_;
       boost::mutex                                  &action_req_mutex_;
@@ -62,18 +68,44 @@ namespace client {
 
       // // // // // // // // // // //
 
-      void asio_loops_start() override;
+      void asio_loops_start();
 
     public:
       bool connect() override;
       bool disconnect() override;
-      void async_send(const protocol::message &msg) override;
+      void async_send(const protocol::message &msg);
       tcp_connection(client::settings_tuple &settings, protocol::message &msg_storage,
                      boost::condition_variable &action_req, boost::mutex &action_req_mutex, bool &flag,
                      boost::barrier &barrier);
   };
-}
 
+  
+  class game_connection : public ABC::connection {
+      std::vector<protocol::update>                 updates_in_;
+      std::vector<protocol::command>                commands_out_;
+
+      protocol::update                              &update_in_;
+      boost::condition_variable                     &update_in_action_;
+      boost::mutex                                  &update_in_mutex_;
+
+      protocol::message                             &error_message_;
+      bool                                          &error_flag_;
+      
+      void async_receive();
+      void async_receive_handler(const boost::system::error_code &error);
+
+      void async_send_handler(const boost::system::error_code &error);
+      
+    public:
+      bool connect() override;
+      bool disconnect() override;
+      void async_send(const protocol::command &cmd);
+      game_connection(const std::string IP_address, const std::string port, protocol::update &update_storage,
+                      boost::condition_variable &update_cond_var, boost::mutex &update_mutex,
+                      protocol::message &error_msg_storage, bool &error_flag);
+  };
+
+}
 
 /* ****************************************************************************************************************** *
  * ***[ END OF CLIENT_CONNECTIONS.HH ]******************************************************************************* *

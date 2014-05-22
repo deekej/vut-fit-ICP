@@ -40,49 +40,36 @@ namespace ABC {
   class connection {
     protected:
       // Connection prerequisites:
-      boost::asio::io_service                   io_service_;
-      boost::asio::ip::tcp::socket              socket_;
-      boost::asio::ip::tcp::endpoint            endpoint_;
-      boost::asio::ip::tcp::resolver            resolver_;
-      boost::asio::ip::tcp::resolver::query     query_;
-      boost::asio::ip::tcp::resolver::iterator  it_endpoint_;
+      boost::asio::io_service                       io_service_;
+      boost::asio::ip::tcp::socket                  socket_;
+      boost::asio::ip::tcp::endpoint                endpoint_;
+      boost::asio::ip::tcp::resolver                resolver_;
+      boost::asio::ip::tcp::resolver::query         query_;
+      boost::asio::ip::tcp::resolver::iterator      it_endpoint_;
       
-      // Messages buffers:
-      std::vector<protocol::message>            messages_in_;
-      std::vector<protocol::message>            messages_out_;
-      
-      // Messages timeout timers:
-      boost::asio::deadline_timer               timeout_in_;
-      boost::asio::deadline_timer               timeout_out_;
-      
+      std::unique_ptr<protocol::tcp_serialization>  pu_tcp_connect_;
+
       // Thread for asynchronous receiving:
-      std::unique_ptr<boost::thread>            pu_asio_thread_;
+      std::unique_ptr<boost::thread>                pu_asio_thread_;
 
       // // // // // // // // // // //
-
-      virtual void asio_loops_start() = 0;
 
     public:
       virtual bool connect() = 0;
       virtual bool disconnect() = 0;
-      virtual void async_send(const protocol::message &msg) = 0;
 
       // // // // // // // // // // //
 
       connection(const std::string &IP_address, const std::string &port) :
-        socket_(io_service_), resolver_(io_service_), query_(IP_address, port),
-        timeout_in_(io_service_), timeout_out_(io_service_)
+        socket_(io_service_), resolver_(io_service_), query_(IP_address, port)
       {{{
-        messages_out_.resize(1);    // Avoiding segmentation fault.
+        pu_tcp_connect_ = std::unique_ptr<protocol::tcp_serialization>(new protocol::tcp_serialization(socket_));
         return;
       }}}
 
       virtual ~connection()
       {{{
         resolver_.cancel();
-
-        timeout_out_.cancel();
-        timeout_in_.cancel();
 
         if (socket_.is_open() == true) {
           boost::system::error_code ignored_error;
