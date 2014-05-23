@@ -59,9 +59,11 @@ namespace game {
       using schar_t = signed char;
 
       boost::mutex                                              access_mutex_;
-    
-      long                                                      game_speed_;
+
       std::string                                               game_owner_;
+      long                                                      game_speed_ {1000};
+      bool                                                      game_run_ {false};
+
       std::string                                               maze_scheme_;
       std::string                                               maze_version_;
 
