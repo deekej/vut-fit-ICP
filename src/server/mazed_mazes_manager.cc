@@ -155,11 +155,12 @@ namespace mazed {
 
             case '~' :
               p_maze->matrix_[i][j].set(game::block::GATE_CLOSED);
-              p_maze->gates_.emplace_back(&p_maze->matrix_[i][j]);
+              p_maze->gates_.emplace_back(std::pair<signed char, signed char>(i, j));
               break;
 
             case '*' :
               p_maze->matrix_[i][j].set(game::block::KEY);
+              p_maze->keys_.emplace_back(std::pair<signed char, signed char>(i, j));
               break;
 
             case 'G' :

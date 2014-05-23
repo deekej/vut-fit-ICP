@@ -2,6 +2,7 @@
  * @file      mazed_game_player.cc
  * @author    Dee'Kej (David Kaspar - xkaspa34)
  * @version   0.1
+ * @brief     Member function implementations of game::player class.
  */
 
 
@@ -191,7 +192,7 @@ namespace game {
     access_mutex_.lock();
     {
       p_maze_->access_mutex_.lock();
-      if (p_maze_->game_run_ == false) {
+      if (p_maze_->game_run_ == false && p_maze_->game_finished_ == false) {
         command_buffer_ = commands_in_[0].cmd;
 
         if (commands_in_[0].cmd == START_CONTINUE && p_maze_->game_owner_ == UID_) {
@@ -203,7 +204,7 @@ namespace game {
       else {
         p_maze_->access_mutex_.unlock();
 
-        if (command_buffer_ == protocol::E_user_command::NONE && finished_ == false) {
+        if (command_buffer_ == protocol::E_user_command::NONE && game_over_ == false) {
           command_buffer_ = commands_in_[0].cmd;
         }
       }
@@ -277,11 +278,35 @@ namespace game {
     if (p_maze_->matrix_[key_coords.first][key_coords.second].get() == game::block::KEY) {
       p_maze_->matrix_[key_coords.first][key_coords.second].set(game::block::EMPTY);
       has_key_ = true;
+
+      std::vector<std::pair<signed char, signed char>>::iterator it_keys;
+
+      for (it_keys = p_maze_->keys_.begin(); it_keys != p_maze_->keys_.end() && *it_keys != coords_; it_keys++) {
+        ;
+      }
+
+      assert(it_keys != p_maze_->keys_.end());
+      assert(*it_keys == coords_);
+
+      p_maze_->keys_.erase(it_keys);
+
       return POSSIBLE;
     }
     else if (p_maze_->matrix_[key_coords.first][key_coords.second].get() == game::block::GATE_DROPPED_KEY) {
       p_maze_->matrix_[key_coords.first][key_coords.second].set(game::block::GATE_OPEN);
       has_key_ = true;
+
+      std::vector<std::pair<signed char, signed char>>::iterator it_keys;
+
+      for (it_keys = p_maze_->keys_.begin(); it_keys != p_maze_->keys_.end() && *it_keys != coords_; it_keys++) {
+        ;
+      }
+
+      assert(it_keys != p_maze_->keys_.end());
+      assert(*it_keys == coords_);
+
+      p_maze_->keys_.erase(it_keys);
+
       return POSSIBLE;
     }
 
@@ -439,7 +464,6 @@ namespace game {
       p_maze_->access_mutex_.unlock();
       return false;
     }
-
   }}}
 
 
@@ -454,6 +478,8 @@ namespace game {
         else {
           p_maze_->matrix_[coords_.first][coords_.second].set(game::block::KEY);
         }
+
+        p_maze_->keys_.emplace_back(std::pair<signed char, signed char>(coords_.first, coords_.second));
       }
       p_maze_->access_mutex_.unlock();
 

@@ -38,6 +38,8 @@ namespace asio = boost::asio;
 using namespace protocol;
 
 namespace game {
+  class instance;
+  class maze;
   class player;
 }
 
