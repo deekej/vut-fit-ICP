@@ -48,8 +48,8 @@ namespace game {
       boost::asio::deadline_timer                               timer_;
       
       game::maze                                                *p_maze_;
-      mazed::shared_resources                                   *p_shared_res_;
       mazed::client_handler                                     *p_cl_handler_;
+      std::shared_ptr<mazed::shared_resources>                  ps_shared_res_;
 
       std::unique_ptr<boost::thread>                            pu_thread_;
       
@@ -63,7 +63,8 @@ namespace game {
       // // // // // // // // // // //
 
     public:
-      instance(game::maze *maze_ptr, mazed::shared_resources *shared_res_ptr, mazed::client_handler *cl_handler_ptr);
+      instance(game::maze *maze_ptr, std::shared_ptr<mazed::shared_resources> ps_shared_res,
+               mazed::client_handler *cl_handler_ptr);
      ~instance();
       game::maze *get_maze();
       void run();

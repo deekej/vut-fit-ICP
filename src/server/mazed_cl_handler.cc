@@ -11,8 +11,7 @@
  * ****************************************************************************************************************** */
 
 
-/* **************************      {{{
-**************************************************************************************** *
+/* ****************************************************************************************************************** *
  ~ ~~~[ HEADER FILES ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
  * ****************************************************************************************************************** */
 
@@ -640,7 +639,7 @@ namespace mazed {
 
   void client_handler::CREATE_GAME_handler()
   {{{
-    if (p_player_ != NULL) {
+    if (p_instance_ != NULL) {
       message_prepare(ERROR, ALREADY_IN_GAME, UPDATE, data_t {"Game already created, terminate it first"});
       return;
     }
@@ -653,10 +652,30 @@ namespace mazed {
       return;
     }
 
+    p_instance_ = new game::instance(p_maze_, ps_shared_res_, this);
     p_player_ = new game::player(player_UID_, player_auth_key_, player_nick_, p_maze_, this);
     
+    unsigned char player_num;
+
+    p_maze_->access_mutex_.lock();
+    {
+      p_maze_->game_owner_ = player_UID_;
+      
+      p_maze_->players_.lock_upgrade();
+      {
+        player_num = p_maze_->players_.add_player(p_player);
+      }
+      p_maze_->players_.unlock_upgrade();
+    }
+    p_maze_->access_mutex_.unlock();
+
+    p_player_->set_player_number(player_num);
+
+    p_instance_->run();
+
     p_player_->run();
-    message_prepare(CTRL, CREATE_GAME, ACK, data_t {std::to_string(p_player_->port()), player_auth_key_});
+    message_prepare(CTRL, CREATE_GAME, ACK,
+                    data_t {std::to_string(p_player_->port()), player_auth_key_, p_maze_->maze_scheme_});
 
     return;
   }}}
@@ -682,7 +701,24 @@ namespace mazed {
 
   void client_handler::LEAVE_GAME_handler()
   {{{
-    return;
+    if (p_instance_ == NULL) {
+      if (p_player_ != NULL) {
+        p_player_->stop();
+        // removing player from maze
+        delete p_player_;
+        p_player_ = NULL;
+
+        assert(p_maze_ == NULL);
+
+        message_prepare(CTRL, LEAVE_GAME, ACK);
+      }
+      else {
+        message_prepare(ERROR, NO_JOINED_GAME, UPDATE, data_t {"You have not joined any running game"});
+      }
+    }
+    else {
+      message_prepare(ERROR, USE_TERMINATE, UPDATE, data_t {"You cannot leave created game, use 'terminate' instead"});
+    }
   }}}
 
 
@@ -694,11 +730,17 @@ namespace mazed {
 
   void client_handler::TERMINATE_GAME_handler()
   {{{
-    if (p_player_ != NULL) {
+    if (p_instance_ != NULL) {
       p_player_->stop();
+      // removing player from maze
 
       delete p_player_;
       p_player_ = NULL;
+
+      p_instance_->stop();
+      // Removing from shared resources
+      delete p_instance_;
+      p_instance_ = NULL;
 
       delete p_maze_;
       p_maze_ = NULL;
@@ -881,4 +923,5 @@ namespace mazed {
 /* ****************************************************************************************************************** *
  * ***[ END OF MAZED_CL_HANDLER.CC ]********************************************************************************* *
  * ****************************************************************************************************************** */
+
 
