@@ -56,6 +56,9 @@ namespace game {
       // // // // // // // // // // //
 
       void run_game();
+      void start_game();
+      void timeout_loop_handler(const boost::system::error_code& error);
+      inline void game_loop();
       
       // // // // // // // // // // //
 

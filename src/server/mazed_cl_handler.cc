@@ -11,7 +11,8 @@
  * ****************************************************************************************************************** */
 
 
-/* ****************************************************************************************************************** *
+/* **************************      {{{
+**************************************************************************************** *
  ~ ~~~[ HEADER FILES ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
  * ****************************************************************************************************************** */
 
@@ -272,7 +273,7 @@ namespace mazed {
    * TIMEOUT check handler. Terminates the whole processing upon error or when the TIMEOUT has passed. Starts a new
    * asynchronous wait in case none of previous conditions are met.
    */
-  void client_handler::check_timeout(const boost::system::error_code& error)
+  void client_handler::check_timeout(const boost::system::error_code &error)
   {{{
     run_mutex_.lock();
     if (run_ == true) {
