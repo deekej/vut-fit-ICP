@@ -78,6 +78,12 @@ namespace game {
     return;
   }}}
 
+
+  std::pair<signed char, signed char> player::get_coords()
+  {{{
+    return coords_;
+  }}}
+
   // // // // // // // // // // //
 
   void player::run()
@@ -213,6 +219,14 @@ namespace game {
 
     async_receive();
     return;
+  }}}
+
+  
+  void player::update_client(protocol::update &update)
+  {{{
+    update.last_move = last_move_result_;
+
+    // TODO: sent to the client & implement handler.
   }}}
 
   // // // // // // // // // // //

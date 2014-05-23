@@ -107,12 +107,15 @@ namespace game {
       unsigned short port();
 
       void set_start_coords(signed char row, signed char col);
+      std::pair<signed char, signed char> get_coords();
 
       void run();
       void stop();
 
       bool update();
       bool kill();
+
+      void update_client(protocol::update &update);
   };
 }
 

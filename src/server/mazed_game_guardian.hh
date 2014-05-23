@@ -59,6 +59,11 @@ namespace game {
         coords_.first = row;
         coords_.second = column;
       }}}
+
+      std::pair<signed char, signed char> get_coords()
+      {{{
+        return coords_;
+      }}}
   };
 }
 

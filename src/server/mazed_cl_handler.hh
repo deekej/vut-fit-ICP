@@ -53,6 +53,7 @@ namespace mazed {
    */
   class client_handler {
       friend class game::player;
+      friend class game::instance;
 
       using tcp = boost::asio::ip::tcp;
       using data_t = std::vector<std::string>;      // Typedef to decrease the space needed for sending text to client.
