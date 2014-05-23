@@ -32,9 +32,9 @@
  * ****************************************************************************************************************** */
 
 namespace game {
-  instance::instance(game::maze *maze_ptr, mazed::shared_resources *shared_res_ptr,
+  instance::instance(game::maze *maze_ptr, std::shared_ptr<mazed::shared_resources> ps_shared_res,
                      mazed::client_handler *cl_handler_ptr) : 
-    timer_(io_service_), p_maze_{maze_ptr}, p_shared_res_{shared_res_ptr}, p_cl_handler_{cl_handler_ptr}
+    timer_(io_service_), p_maze_{maze_ptr}, p_cl_handler_{cl_handler_ptr}, ps_shared_res_{ps_shared_res}
   {{{
     return;
   }}}

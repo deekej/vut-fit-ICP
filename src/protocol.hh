@@ -197,6 +197,8 @@ namespace protocol {
     TIMEOUT,
     HANDSHAKE,
     NO_GAME_RUNNING,
+    NO_JOINED_GAME,
+    USE_TERMINATE,
     MAZE_BROKEN,
     ALREADY_IN_GAME,
     ALREADY_PLAYED,
@@ -205,7 +207,7 @@ namespace protocol {
     UNKNOWN_ERROR,
   };
 
-  #define E_ERROR_TYPE_SIZE 17U   // Used as a control mechanism against enum overflow. Always update!
+  #define E_ERROR_TYPE_SIZE 19U   // Used as a control mechanism against enum overflow. Always update!
 
   enum E_status {
     ACK = 0,
