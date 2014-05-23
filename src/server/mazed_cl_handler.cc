@@ -25,8 +25,11 @@
 
 #include <cassert>
 
+#include "mazed_game_instance.hh"
+#include "mazed_game_maze.hh"
 #include "mazed_game_player.hh"
 #include "mazed_cl_handler.hh"
+
 
 /* ****************************************************************************************************************** *
  ~ ~~~[ MEMBER FUNCTIONS IMPLEMENTATIONS ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~

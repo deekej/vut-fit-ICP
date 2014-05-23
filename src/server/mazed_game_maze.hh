@@ -19,6 +19,7 @@
  * ****************************************************************************************************************** */
 
 #include <array>
+#include <queue>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -43,6 +44,7 @@ namespace mazed {
 namespace game {
 
   class player;
+  class instance;
 
   /**
    * Maze class to be used by the game instance's logic.
@@ -52,7 +54,7 @@ namespace game {
       friend class mazed::mazes_manager;
       friend class game::player;
       friend class game::guardian;
-      // game_instance
+      friend class game::instance;
 
       // // // // // // // // // // //
 
@@ -63,6 +65,7 @@ namespace game {
       std::string                                               game_owner_;
       long                                                      game_speed_ {1000};
       bool                                                      game_run_ {false};
+      bool                                                      game_finished_ {false};
 
       std::string                                               maze_scheme_;
       std::string                                               maze_version_;
@@ -74,15 +77,19 @@ namespace game {
       std::array<std::pair<schar_t, schar_t>, GAME_MAX_PLAYERS> players_saved_coords_;
       
       std::vector<game::guardian>                               guardians_;
-      std::vector<game::block *>                                gates_;
+      std::vector<std::pair<schar_t, schar_t>>                  gates_;
+      std::vector<std::pair<schar_t, schar_t>>                  keys_;
       std::vector<std::vector<game::block>>                     matrix_;
+
+      std::queue<std::pair<protocol::E_info_type, std::string>> events_queue_;
+      protocol::update                                          next_update_;
 
       // // // // // // // // // // //
       
     public:
       maze(schar_t row_num, schar_t col_num, const std::string &scheme) :
         basic_maze(row_num, col_num),
-        maze_scheme_{scheme}, matrix_(row_num, std::vector<game::block>(col_num))
+        maze_scheme_{scheme}, gates_(), keys_(), matrix_(row_num, std::vector<game::block>(col_num))
       {{{
         return;
       }}}

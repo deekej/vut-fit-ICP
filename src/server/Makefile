@@ -24,7 +24,7 @@ CXXFLAGS=-std=c++11 -pedantic -W -Wall -Wextra -g
 
 all: mazed
 
-mazed: build/mazed_main.o build/mazed_server.o build/mazed_server_connection.o build/mazed_cl_handler.o build/mazed_mazes_manager.o build/mazed_game_player.o
+mazed: build/mazed_main.o build/mazed_server.o build/mazed_server_connection.o build/mazed_cl_handler.o build/mazed_mazes_manager.o build/mazed_game_player.o build/mazed_game_instance.o
 	$(LINKER) $(CXXFLAGS) $(LIBRARY_LINKAGE) -o $@ $^
 
 build/mazed_main.o: mazed_main.cc mazed_globals.hh
@@ -44,6 +44,9 @@ build/mazed_mazes_manager.o: mazed_mazes_manager.cc mazed_mazes_manager.hh mazed
 
 build/mazed_game_player.o: mazed_game_player.cc mazed_game_player.hh mazed_game_globals.hh mazed_globals.hh mazed_cl_handler.hh
 	$(CXX) $(CXXFLAGS) -o $@ -c mazed_game_player.cc
+
+build/mazed_game_instance.o: mazed_game_instance.cc mazed_game_instance.hh mazed_game_globals.hh mazed_game_maze.hh mazed_game_player.hh mazed_game_guardian.hh mazed_game_block.hh mazed_globals.hh mazed_cl_handler.hh ../protocol.hh
+	$(CXX) $(CXXFLAGS) -o $@ -c mazed_game_instance.cc
 
 ############################################################
 # Other useful stuff:

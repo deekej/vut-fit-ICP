@@ -25,6 +25,7 @@
 #include <string>
 
 #include <boost/serialization/vector.hpp>   // For simpler includes.
+#include <boost/serialization/utility.hpp>
 
 #include "serialization.hh"                 // Including the serialization connection for simpler includes.
 
@@ -39,21 +40,26 @@ namespace protocol {
     NOT_POSSIBLE,
   };
   
-  /** FIXME: These needs some serious updates!
+  /**
    * Update message send to client's game instance: 
    */
   struct update {
-    enum E_move_result  last_move;
-    unsigned char       players_count;      // Actual players count.
-    unsigned char       guardians_count;    // Actual number of guardians.
+    enum E_move_result                                last_move;
+    std::vector<std::pair<signed char, signed char>>  keys_coords;
+    std::vector<std::pair<signed char, signed char>>  gates_opened_coords;
+    std::vector<std::pair<signed char, signed char>>  gates_closed_coords;
+    std::vector<std::pair<signed char, signed char>>  players_coords;
+    std::vector<std::pair<signed char, signed char>>  guardians_coords;
 
     template <typename Archive>
     void serialize(Archive &ar, const unsigned int version __attribute__((unused)))
     {{{
       ar & last_move;
-      ar & players_count;
-      ar & guardians_count;
-
+      ar & keys_coords;
+      ar & gates_opened_coords;
+      ar & gates_closed_coords;
+      ar & players_coords;
+      ar & guardians_coords;
       return;
     }}}
   };
@@ -166,7 +172,6 @@ namespace protocol {
 
   enum E_info_type {
     HELLO = 0,
-    LOAD_DATA,
     GAMES_DATA,
     PLAYER_JOINED,
     PLAYER_LEFT,
@@ -178,7 +183,7 @@ namespace protocol {
     GAME_TERMINATED,
   };
 
-  #define E_INFO_TYPE_SIZE 11U    // Used as a control mechanism against enum overflow. Always update!
+  #define E_INFO_TYPE_SIZE 10U    // Used as a control mechanism against enum overflow. Always update!
 
   enum E_error_type {
     WRONG_PROTOCOL = 0,
@@ -200,7 +205,7 @@ namespace protocol {
     UNKNOWN_ERROR,
   };
 
-  #define E_ERROR_TYPE_SIZE 14U   // Used as a control mechanism against enum overflow. Always update!
+  #define E_ERROR_TYPE_SIZE 17U   // Used as a control mechanism against enum overflow. Always update!
 
   enum E_status {
     ACK = 0,

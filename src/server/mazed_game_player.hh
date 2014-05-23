@@ -70,7 +70,7 @@ namespace game {
       std::string                                   UID_;
       std::string                                   auth_key_;
 
-      bool                                          finished_ {false};
+      bool                                          game_over_ {false};
       // unsigned char                                 invulnerability_ {3};
       std::pair<signed char, signed char>           start_coords_;          // Respawn coordinates.
 
