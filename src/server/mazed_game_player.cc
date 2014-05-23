@@ -190,12 +190,23 @@ namespace game {
 
     access_mutex_.lock();
     {
-      if (command_buffer_ != protocol::E_user_command::NONE || finished_ == true) {
-        access_mutex_.unlock();
-        return;
-      }
+      p_maze_->access_mutex_.lock();
+      if (p_maze_->game_run_ == false) {
+        command_buffer_ = commands_in_[0].cmd;
 
-      command_buffer_ = commands_in_[0].cmd;
+        if (commands_in_[0].cmd == START_CONTINUE && p_maze_->game_owner_ == UID_) {
+          p_maze_->game_run_ = true;
+        }
+
+        p_maze_->access_mutex_.unlock();
+      }
+      else {
+        p_maze_->access_mutex_.unlock();
+
+        if (command_buffer_ == protocol::E_user_command::NONE && finished_ == false) {
+          command_buffer_ = commands_in_[0].cmd;
+        }
+      }
     }
     access_mutex_.unlock();
 
@@ -402,7 +413,13 @@ namespace game {
         break;
 
       case START_CONTINUE :
+        break;
+
       case PAUSE :
+        if (p_maze_->game_owner_ == UID_ && p_maze_->game_run_ == true) {
+          last_move_result_ = POSSIBLE;
+          p_maze_->game_run_ = false;
+        }
         break;
       
       // Moving in given direction again until solid object is found:
