@@ -217,7 +217,6 @@ namespace client {
    */
   void mediator::error_message_handler()
   {{{
-
     switch (message_in_.error_type) {
       case WRONG_PROTOCOL :
       case EMPTY_MESSAGE :
@@ -232,14 +231,14 @@ namespace client {
       case UNKNOWN_ERROR :
         p_tcp_connect_->disconnect();
         display_message_error();
-        p_interface_->display_message("NOTE:  You can try to reconnect to server by writing 'reconnect' or"
-                                      "\n\t    write 'quit' or 'exit' to end the program.");
+        display_message("NOTE:  You can try to reconnect to server by writing 'reconnect' or\n"
+                        "\t    write 'quit' or 'exit' to end the program.");
         break;
 
       case CONNECTION_FAILED :
         display_message_error();
-        p_interface_->display_message("NOTE:  You can specify the new IP address/port and try to connect again by using"
-                                      "\n\t    the 'reconnect' feature. Write 'help' to see the available commands.");
+        display_message("NOTE:  You can specify the new IP address/port and try to connect again by using\n"
+                        "\t    the 'reconnect' feature. Write 'help' to see the available commands.");
         break;
       default :
         display_message_error();
@@ -249,6 +248,29 @@ namespace client {
   }}}
 
   // // // // // // // // // // // //
+
+  inline void mediator::display_message(const std::string &str)
+  {{{
+    assert(p_interface_ != NULL);
+
+    p_interface_->display_message(str);
+
+    return;
+  }}}
+
+
+  /**
+   * Displays single string as an error message:
+   */
+  inline void mediator::display_error(const std::string &str)
+  {{{
+    assert(p_interface_ != NULL);
+
+    p_interface_->display_message("ERROR: " + str);
+
+    return;
+  }}}
+
 
   /**
    * Displays the error messages generated from server or locally during network communication.
@@ -274,18 +296,6 @@ namespace client {
     return;
   }}}
 
-
-  /**
-   * Displays single string as an error message:
-   */
-  void mediator::display_error(const std::string &str)
-  {{{
-    assert(p_interface_ != NULL);
-
-    p_interface_->display_message("ERROR: " + str);
-
-    return;
-  }}}
 
   // // // // // // // // // // // //
 
@@ -422,8 +432,8 @@ namespace client {
 
   void mediator::CMD_GAME_TERMINATE_handler()
   {{{
-    p_interface_->display_message("Command not implemented yet, sorry.");
-
+    message_prepare(CTRL, TERMINATE_GAME, SET);
+    message_send();
     return;
   }}}
 
@@ -632,6 +642,14 @@ namespace client {
 
   void mediator::CTRL_MSG_CREATE_GAME_handler()
   {{{
+    if (message_in_.status != ACK) {
+      display_error("Server refused the request of game creation");
+      return;
+    }
+
+    GI_port_ = message_in_.data[0];
+    GI_auth_key_ = message_in_.data[1];
+
     return;
   }}}
 

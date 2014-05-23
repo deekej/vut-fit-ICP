@@ -26,7 +26,6 @@
 #include "mazed_game_globals.hh"
 #include "mazed_game_block.hh"
 #include "mazed_game_guardian.hh"
-#include "mazed_game_player.hh"
 #include "mazed_game_players_list.hh"
 #include "../protocol.hh"
 #include "../basic_maze.hh"
@@ -42,6 +41,8 @@ namespace mazed {
 }
 
 namespace game {
+
+  class player;
 
   /**
    * Maze class to be used by the game instance's logic.
@@ -89,33 +90,35 @@ namespace game {
         return;
       }}}
 
-      bool is_move_possible(schar_t row_coord, schar_t col_coord, protocol::E_user_command command)
+      bool is_move_possible(std::pair<signed char, signed char> coords, game::E_move move)
       {{{
-        switch (command) {
-          case protocol::E_user_command::LEFT :
-            col_coord--;
+        game::block::E_block_type block;
+
+        switch (move) {
+          case game::E_move::LEFT :
+            coords.second--;
             break;
 
-          case protocol::E_user_command::RIGHT :
-            col_coord++;
+          case game::E_move::RIGHT :
+            coords.second++;
             break;
 
-          case protocol::E_user_command::UP :
-            row_coord--;
+          case game::E_move::UP :
+            coords.first--;
             break;
 
-          case protocol::E_user_command::DOWN :
-            row_coord++;
+          case game::E_move::DOWN :
+            coords.first++;
             break;
 
-          case protocol::E_user_command::STOP :
+          case game::E_move::STOP :
             return true;
 
           default :
             return false;
         }
 
-        game::block::E_block_type block = matrix_[row_coord % dimensions_.first][col_coord % dimensions_.second].get();
+        block = matrix_[coords.first % dimensions_.first][coords.second % dimensions_.second].get();
 
         return (block == game::block::WALL || block == game::block::GATE_CLOSED) ? false : true;
       }}}
