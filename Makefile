@@ -27,6 +27,7 @@ all:
 run:
 
 doxygen:
+	doxygen doxygen.conf
 
 pack:
 
