@@ -119,10 +119,10 @@ namespace mazed {
       std::string                                   player_auth_key_ {"Hello!"};
       std::string                                   player_nick_ {"THIS IS NICK!"};
       std::string                                   player_UID_ {"abc1234"};
-
-      game::player                                  *p_player_ {NULL};
+      
+      game::instance                                *p_instance_ {NULL};
       game::maze                                    *p_maze_ {NULL};
-      // game-instance pointer
+      game::player                                  *p_player_ {NULL};
 
     public:
       client_handler(tcp::socket &sckt, asio::io_service &io_serv, mazed::settings_tuple &settings,
