@@ -61,6 +61,7 @@ namespace protocol {
   // // // // // // // // // // // // // // // //
   
   enum E_user_command {
+    NONE = 0,
     LEFT,
     RIGHT,
     UP,
@@ -190,6 +191,9 @@ namespace protocol {
     NO_CONNECTION,
     TIMEOUT,
     HANDSHAKE,
+    NO_GAME_RUNNING,
+    MAZE_BROKEN,
+    ALREADY_IN_GAME,
     ALREADY_PLAYED,
     SERVER_ERROR,
     SERVER_ERROR_INFO,

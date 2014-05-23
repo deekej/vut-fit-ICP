@@ -79,6 +79,13 @@ namespace game {
         nick_ = nick;
         return;
       }}}
+      
+
+      virtual void set_player_number(unsigned char number)
+      {{{
+        player_num_ = number;
+        return;
+      }}}
 
 
       virtual unsigned char get_lifes()

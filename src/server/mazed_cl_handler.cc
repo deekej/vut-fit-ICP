@@ -25,6 +25,7 @@
 
 #include <cassert>
 
+#include "mazed_game_player.hh"
 #include "mazed_cl_handler.hh"
 
 /* ****************************************************************************************************************** *
@@ -63,6 +64,12 @@ namespace mazed {
   {{{
     log(mazed::log_level::INFO, "Client handler is STOPPING");
     log_file_.close();
+
+    if (p_player_ != NULL) {
+      p_player_->stop();
+      delete p_player_;
+      delete p_maze_;
+    }
 
     return;
   }}}
@@ -629,6 +636,24 @@ namespace mazed {
 
   void client_handler::CREATE_GAME_handler()
   {{{
+    if (p_player_ != NULL) {
+      message_prepare(ERROR, ALREADY_IN_GAME, UPDATE, data_t {"Game already created, terminate it first"});
+      return;
+    }
+
+    p_maze_ = ps_shared_res_->p_mazes_manager->load_maze(message_in_.data[0]);
+
+    if (p_maze_ == NULL) {
+      message_prepare(ERROR, MAZE_BROKEN, UPDATE, data_t {"The maze couldn't be loaded because it's not valid"});
+      log(mazed::log_level::ERROR, "Failed to load broken maze");
+      return;
+    }
+
+    p_player_ = new game::player(player_UID_, player_auth_key_, player_nick_, p_maze_, this);
+    
+    p_player_->run();
+    message_prepare(CTRL, CREATE_GAME, ACK, data_t {std::to_string(p_player_->port()), player_auth_key_});
+
     return;
   }}}
 
@@ -665,6 +690,21 @@ namespace mazed {
 
   void client_handler::TERMINATE_GAME_handler()
   {{{
+    if (p_player_ != NULL) {
+      p_player_->stop();
+
+      delete p_player_;
+      p_player_ = NULL;
+
+      delete p_maze_;
+      p_maze_ = NULL;
+
+      message_prepare(CTRL, TERMINATE_GAME, ACK);
+    }
+    else {
+      message_prepare(ERROR, NO_GAME_RUNNING, UPDATE, data_t {"There's no running game which could be terminated"});
+    }
+
     return;
   }}}
 

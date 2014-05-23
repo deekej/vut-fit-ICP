@@ -27,7 +27,6 @@
 
 #include "mazed_globals.hh"
 #include "mazed_shared_resources.hh"
-#include "mazed_game_maze.hh"
 #include "../protocol.hh"
 
 
@@ -38,6 +37,10 @@
 namespace asio = boost::asio;
 using namespace protocol;
 
+namespace game {
+  class player;
+}
+
 namespace mazed {
 
   /**
@@ -47,6 +50,8 @@ namespace mazed {
    * @note The game instance itself is started in another thread, which is running independently.
    */
   class client_handler {
+      friend class game::player;
+
       using tcp = boost::asio::ip::tcp;
       using data_t = std::vector<std::string>;      // Typedef to decrease the space needed for sending text to client.
 
@@ -105,6 +110,16 @@ namespace mazed {
       };
 
       mazed::settings_tuple                         &settings_;     // Server daemon settings.
+
+      // // // // // // // // // // //
+
+      std::string                                   player_auth_key_ {"Hello!"};
+      std::string                                   player_nick_ {"THIS IS NICK!"};
+      std::string                                   player_UID_ {"abc1234"};
+
+      game::player                                  *p_player_ {NULL};
+      game::maze                                    *p_maze_ {NULL};
+      // game-instance pointer
 
     public:
       client_handler(tcp::socket &sckt, asio::io_service &io_serv, mazed::settings_tuple &settings,

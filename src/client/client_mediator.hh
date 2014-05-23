@@ -67,6 +67,12 @@ namespace client {
       std::vector<std::string>                    available_mazes_;
       std::vector<std::string>                    available_saves_;
 
+      std::string                                 GI_port_;
+      std::string                                 GI_auth_key_;
+      protocol::update                            update_;
+      boost::condition_variable                   update_cond_;
+      boost::mutex                                update_mutex_;
+
       // // // // // // // // // // //
 
       using pf_input_handler = void (mediator::*)();
@@ -150,8 +156,9 @@ namespace client {
 
       // // // // // // // // // // //
       
+      inline void display_message(const std::string &str);
+      inline void display_error(const std::string &str);
       void display_message_error();
-      void display_error(const std::string &str);
 
       // // // // // // // // // // //
 
