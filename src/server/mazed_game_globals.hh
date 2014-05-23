@@ -24,9 +24,20 @@
  * ****************************************************************************************************************** */
 
 namespace game {
-  #define GAME_MAX_PLAYERS    4   // We don't want to make another module just for one global variable.
+
+  #define GAME_MAX_PLAYERS    4U
   #define MAZE_MIN_SIZE       15U
   #define MAZE_MAX_SIZE       50U
+
+  enum E_move {
+    NONE = 0,
+    LEFT,
+    RIGHT,
+    UP,
+    DOWN,
+    STOP,
+  };
+
 }
 
 

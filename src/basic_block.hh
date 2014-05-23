@@ -28,17 +28,17 @@ namespace game {
     public:
       enum E_block_type {
         EMPTY = 0,
-        PLAYER,
-        PLAYER_ON_GATE,
         WALL,
         TARGET,
         GATE_CLOSED,
         GATE_OPEN,
+        GATE_DROPPED_KEY,
         KEY,
       };
 
     protected:
       enum E_block_type type_;
+      bool has_player_ {false};
 
     public:
       basic_block() : type_{EMPTY}
@@ -56,7 +56,7 @@ namespace game {
         return;
       }}}
 
-      void set(E_block_type type)
+      virtual void set(E_block_type type)
       {{{
         type_ = type;
         return;

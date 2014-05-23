@@ -673,12 +673,13 @@ namespace client {
  * ****************************************************************************************************************** */
 
 namespace client {
-  game_connection::game_connection(const std::string IP_address, const std::string port,
+  game_connection::game_connection(const std::string IP_address, const std::string port, const std::string &auth_key,
                                    protocol::update &update_storage, boost::condition_variable &update_cond_var,
                                    boost::mutex &update_mutex, protocol::message &error_msg_storage,
-                                   bool &error_flag) : connection(IP_address, port),
+                                   bool &error_flag) :
+    connection(IP_address, port),
     update_in_{update_storage}, update_in_action_{update_cond_var}, update_in_mutex_{update_mutex},
-    error_message_{error_msg_storage}, error_flag_{error_flag}
+    error_message_{error_msg_storage}, error_flag_{error_flag}, auth_key_{auth_key}
   {{{
     commands_out_.resize(1);
     return;
@@ -724,7 +725,7 @@ namespace client {
     }
     
     // Successful connection, starting & detaching a new thread for ASYNC operations:
-    pu_asio_thread_ = std::unique_ptr<boost::thread>(new boost::thread(&game_connection::async_receive, this));
+    pu_asio_thread_ = std::unique_ptr<boost::thread>(new boost::thread(&game_connection::authenticate, this));
     
     return true;
 
@@ -758,6 +759,54 @@ namespace client {
     return true;
   }}}
 
+  void game_connection::authenticate()
+  {{{
+    std::vector<protocol::message> message_vect(1);
+
+    message_vect[0].type = protocol::E_type::CTRL;
+    message_vect[0].ctrl_type = protocol::E_ctrl_type::SYN;
+    message_vect[0].status = protocol::E_status::UPDATE;
+    message_vect[0].data.push_back(auth_key_);
+
+    pu_tcp_connect_->async_write(message_vect, boost::bind(&game_connection::authenticate_handler, this,
+                                                           boost::asio::placeholders::error));
+    return;
+  }}}
+
+  void game_connection::authenticate_handler(const boost::system::error_code &error)
+  {{{
+    if (error) {
+      error_message_.type = protocol::E_type::ERROR;
+      error_message_.status = protocol::E_status::LOCAL;
+
+      switch (error.value()) {
+        case boost::asio::error::eof :
+          error_message_.error_type = protocol::E_error_type::CONNECTION_CLOSED;
+          error_message_.data.push_back("Game authentication failed");
+          break;
+
+        case boost::asio::error::operation_aborted :
+          error_message_.error_type = protocol::E_error_type::TIMEOUT;
+          error_message_.data.push_back("Game connection to server has timed out");
+          error_message_.data.push_back("The connection has been closed");
+          break;
+
+        default :
+          error_message_.error_type = protocol::E_error_type::UNKNOWN_ERROR;
+          error_message_.data.push_back("While authenticating to game: ");
+          error_message_.data.back().append(error.message());
+          error_message_.data.push_back("The connection has been closed");
+          break;
+      }
+
+      error_flag_ = true;
+      update_in_action_.notify_one();
+      return;
+    }
+
+    async_receive();
+    return;
+  }}}
 
   void game_connection::async_send(const protocol::command &cmd)
   {{{

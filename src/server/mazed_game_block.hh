@@ -29,6 +29,8 @@
  * ****************************************************************************************************************** */
 
 namespace game {
+  class player;
+
   /**
    * Class of game block for server-side purposes.
    */
@@ -42,15 +44,63 @@ namespace game {
         return;
       }}}
 
+
       ~block()
       {{{
         delete p_players_;
         return;
       }}}
 
+
       E_block_type get()
       {{{
         return type_;
+      }}}
+
+
+      inline void set(E_block_type type)
+      {{{
+        type_ = type;
+        return;
+      }}}
+
+
+      void add_player(game::player *p_player)
+      {{{
+        if (p_players_ == NULL) {
+          p_players_ = new std::vector<game::player *>();
+        }
+
+        p_players_->push_back(p_player);
+        has_player_ = true;
+
+        return;
+      }}}
+
+
+      void remove_player(game::player *p_player)
+      {{{
+        assert(has_player_ == true);
+        assert(p_players_ != NULL);
+
+        std::vector<game::player *>::iterator it;
+
+        for (it = p_players_->begin(); it != p_players_->end() && *it != p_player; it++) {
+          ;
+        }
+
+        assert(it != p_players_->end());
+        assert(*it == p_player);
+
+        p_players_->erase(it);
+
+        if (p_players_->size() == 0) {
+          delete p_players_;
+          p_players_ = NULL;
+          has_player_ = false;
+        }
+
+        return;
       }}}
   };
 }

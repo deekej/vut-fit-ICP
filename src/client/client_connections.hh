@@ -90,7 +90,13 @@ namespace client {
 
       protocol::message                             &error_message_;
       bool                                          &error_flag_;
+
+      std::string                                   auth_key_;
+
+      // // // // // // // // // // //
       
+      void authenticate();
+      void authenticate_handler(const boost::system::error_code &error);
       void async_receive();
       void async_receive_handler(const boost::system::error_code &error);
 
@@ -100,9 +106,9 @@ namespace client {
       bool connect() override;
       bool disconnect() override;
       void async_send(const protocol::command &cmd);
-      game_connection(const std::string IP_address, const std::string port, protocol::update &update_storage,
-                      boost::condition_variable &update_cond_var, boost::mutex &update_mutex,
-                      protocol::message &error_msg_storage, bool &error_flag);
+      game_connection(const std::string IP_address, const std::string port, const std::string &auth_key,
+                      protocol::update &update_storage, boost::condition_variable &update_cond_var,
+                      boost::mutex &update_mutex, protocol::message &error_msg_storage, bool &error_flag);
   };
 
 }
