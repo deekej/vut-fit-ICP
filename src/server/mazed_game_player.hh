@@ -18,6 +18,8 @@
  ~ ~~~[ HEADER FILES ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
  * ****************************************************************************************************************** */
 
+#include <fstream>
+
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
@@ -55,8 +57,9 @@ namespace game {
       tcp::acceptor                                 acceptor_;
       
       std::unique_ptr<protocol::tcp_serialization>  pu_tcp_connect_;
+      bool                                          connected_ {false};
+
       std::unique_ptr<boost::thread>                pu_thread_;
-      // std::shared_ptr<mazed::shared_resources>      ps_shared_res_;
       
       std::vector<protocol::update>                 updates_out_;
       std::vector<protocol::command>                commands_in_;
@@ -70,14 +73,14 @@ namespace game {
       std::string                                   UID_;
       std::string                                   auth_key_;
 
+      std::pair<signed char, signed char>           start_coords_;                // Respawn coordinates.
+      bool                                          invulnerability_ {true};
       bool                                          game_over_ {false};
-      // unsigned char                                 invulnerability_ {3};
-      std::pair<signed char, signed char>           start_coords_;          // Respawn coordinates.
 
       boost::mutex                                  access_mutex_;
 
-      game::maze                                    *p_maze_;
-      mazed::client_handler                         *p_cl_handler_;
+      game::maze                                    *p_maze_ {NULL};
+      mazed::client_handler                         *p_cl_handler_ {NULL};
 
       // Some stats.
 
@@ -90,32 +93,34 @@ namespace game {
       void handle_authentication(const boost::system::error_code &error);
       void async_receive();
       void async_receive_handler(const boost::system::error_code &error);
+      void update_client_handler(const boost::system::error_code &error);
 
       inline void update_coords(game::E_move);
       inline protocol::E_move_result get_key();
       inline protocol::E_move_result open_gate();
 
     public:
-      player(const std::string &puid, const std::string &auth_key, game::maze *p_maze,
-             mazed::client_handler *p_client_handler);
-      player(const std::string &puid, const std::string &auth_key, const std::string &nick, game::maze *p_maze,
+      player(const std::string &puid, const std::string &auth_key, const std::string &nick,
              mazed::client_handler *p_client_handler);
      ~player();
 
       // // // // // // // // // // //
 
       unsigned short port();
-
-      void set_start_coords(signed char row, signed char col);
-      std::pair<signed char, signed char> get_coords();
+      
+      void set_maze(game::maze *maze_ptr);
+      void set_start_coords(std::pair<signed char, signed char> coords);
 
       void run();
       void stop();
 
+      std::pair<signed char, signed char> get_coords();
+
       bool update();
       bool kill();
 
-      void update_client(protocol::update &update);
+      void game_finished();
+      void update_client(std::vector<protocol::update> &updates);
   };
 }
 

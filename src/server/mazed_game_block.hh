@@ -94,7 +94,7 @@ namespace game {
 
         p_players_->erase(it);
 
-        if (p_players_->size() == 0) {
+        if (p_players_->empty() == true) {
           delete p_players_;
           p_players_ = NULL;
           has_player_ = false;

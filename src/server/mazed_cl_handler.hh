@@ -92,6 +92,16 @@ namespace mazed {
       protocol::message                             message_in_;
       protocol::message                             message_out_;
 
+      bool                                          player_in_game_ {false};
+      std::string                                   player_auth_key_ {"Hello!"};
+      std::string                                   player_nick_ {"THIS IS NICK!"};
+      std::string                                   player_UID_ {"abc1234"};
+      
+      std::unique_ptr<game::player>                 pu_player_;
+      std::shared_ptr<game::instance>               ps_instance_;
+
+      mazed::settings_tuple                         &settings_;     // Server daemon settings.
+
       using pf_message_handler = void (client_handler::*)();
       
       // Array of pointers to message function handlers:
@@ -112,17 +122,7 @@ namespace mazed {
         &client_handler::TERMINATE_GAME_handler,
       };
 
-      mazed::settings_tuple                         &settings_;     // Server daemon settings.
-
       // // // // // // // // // // //
-
-      std::string                                   player_auth_key_ {"Hello!"};
-      std::string                                   player_nick_ {"THIS IS NICK!"};
-      std::string                                   player_UID_ {"abc1234"};
-      
-      game::instance                                *p_instance_ {NULL};
-      game::maze                                    *p_maze_ {NULL};
-      game::player                                  *p_player_ {NULL};
 
     public:
       client_handler(tcp::socket &sckt, asio::io_service &io_serv, mazed::settings_tuple &settings,

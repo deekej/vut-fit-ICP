@@ -134,17 +134,21 @@ namespace mazed {
           return NULL;
         }
 
-        maze_scheme << input << " ";
+        maze_scheme << input << "\n";
       }
 
 
       input = maze_scheme.str();
       p_maze = new game::maze(static_cast<signed char>(rows), static_cast<signed char>(cols), input);
       
+      std::size_t linear_pos {0};
 
       for (std::size_t i = 0; i < rows; i++) {
         for (std::size_t j = 0; j < cols; j++) {
-          switch (input[i * cols * 2 + j * 2]) {
+
+          linear_pos = (i * cols * 2) + (j * 2);
+
+          switch (input[linear_pos]) {
             case ' ' :
               p_maze->matrix_[i][j].set(game::block::EMPTY);
               break;
@@ -170,25 +174,30 @@ namespace mazed {
             case '1' :
               p_maze->players_start_coords_[0].first = i;
               p_maze->players_start_coords_[0].second = j;
+              input[linear_pos] = ' ';
               break;
               
             case '2' :
               p_maze->players_start_coords_[1].first = i;
               p_maze->players_start_coords_[1].second = j;
+              input[linear_pos] = ' ';
               break;
               
             case '3' :
               p_maze->players_start_coords_[2].first = i;
               p_maze->players_start_coords_[2].second = j;
+              input[linear_pos] = ' ';
               break;
               
             case '4' :
               p_maze->players_start_coords_[3].first = i;
               p_maze->players_start_coords_[3].second = j;
+              input[linear_pos] = ' ';
               break;
               
             case '@' :
               p_maze->guardians_.emplace_back(i, j, p_maze);
+              input[linear_pos] = ' ';
               break;
 
             default :
