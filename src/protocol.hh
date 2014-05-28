@@ -46,8 +46,7 @@ namespace protocol {
   struct update {
     enum E_move_result                                last_move;
     std::vector<std::pair<signed char, signed char>>  keys_coords;
-    std::vector<std::pair<signed char, signed char>>  gates_opened_coords;
-    std::vector<std::pair<signed char, signed char>>  gates_closed_coords;
+    std::vector<std::pair<signed char, signed char>>  opened_gates_coords;
     std::vector<std::pair<signed char, signed char>>  players_coords;
     std::vector<std::pair<signed char, signed char>>  guardians_coords;
 
@@ -56,8 +55,7 @@ namespace protocol {
     {{{
       ar & last_move;
       ar & keys_coords;
-      ar & gates_opened_coords;
-      ar & gates_closed_coords;
+      ar & opened_gates_coords;
       ar & players_coords;
       ar & guardians_coords;
       return;
@@ -96,8 +94,7 @@ namespace protocol {
   // // // // // // // // // // // // // // // //
   
   enum E_game_status {
-    LOBBY,
-    RUNNING,
+    RUNNING = 0,
     PAUSED,
     FINISHED,
   };
@@ -179,11 +176,12 @@ namespace protocol {
     PLAYER_KILLED,
     PLAYER_GAME_OVER,
     PLAYER_WIN,
+    GAME_FINISHED,
     GAME_RESTARTED,
     GAME_TERMINATED,
   };
 
-  #define E_INFO_TYPE_SIZE 10U    // Used as a control mechanism against enum overflow. Always update!
+  #define E_INFO_TYPE_SIZE 11U    // Used as a control mechanism against enum overflow. Always update!
 
   enum E_error_type {
     WRONG_PROTOCOL = 0,
@@ -198,6 +196,7 @@ namespace protocol {
     HANDSHAKE,
     NO_GAME_RUNNING,
     NO_JOINED_GAME,
+    NOT_OWNER,
     USE_TERMINATE,
     MAZE_BROKEN,
     ALREADY_IN_GAME,
@@ -207,7 +206,7 @@ namespace protocol {
     UNKNOWN_ERROR,
   };
 
-  #define E_ERROR_TYPE_SIZE 19U   // Used as a control mechanism against enum overflow. Always update!
+  #define E_ERROR_TYPE_SIZE 20U   // Used as a control mechanism against enum overflow. Always update!
 
   enum E_status {
     ACK = 0,

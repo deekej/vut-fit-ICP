@@ -123,19 +123,6 @@ namespace game {
       }}}
 
 
-      void remove(unsigned char player_num)
-      {{{
-        players_[player_num] = NULL;
-        used_slots_--;
-        
-        if (player_num < first_empty_) {
-          first_empty_ = player_num;
-        }
-
-        return;
-      }}}
-
-
 #ifndef NDEBUG
       void remove(unsigned char player_num, game::player *p_player)
       {{{
@@ -143,6 +130,18 @@ namespace game {
         used_slots_--;
 
         players_[player_num] = NULL;
+        
+        if (player_num < first_empty_) {
+          first_empty_ = player_num;
+        }
+
+        return;
+      }}}
+#else
+      void remove(unsigned char player_num)
+      {{{
+        players_[player_num] = NULL;
+        used_slots_--;
         
         if (player_num < first_empty_) {
           first_empty_ = player_num;

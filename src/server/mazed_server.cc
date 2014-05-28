@@ -96,8 +96,9 @@ namespace mazed {
     while (run_ == true) {
       run_mutex_.unlock();
       
-      // Launch a new connection thread, it will start accept automatically:
+      // Launch a new connection thread and detach it, it will start accept automatically:
       boost::thread connection_receive(boost::bind(&server::connection_thread, this));
+      connection_receive.detach();
       
       // Wait for notification to create a new connection:
       new_connection_.wait(lock);

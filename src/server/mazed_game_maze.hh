@@ -50,7 +50,6 @@ namespace game {
    * Maze class to be used by the game instance's logic.
    */
   class maze : public basic_maze {
-      friend class mazed::client_handler;
       friend class mazed::mazes_manager;
       friend class game::player;
       friend class game::guardian;
@@ -66,11 +65,13 @@ namespace game {
       long                                                      game_speed_ {1000};
       bool                                                      game_run_ {false};
       bool                                                      game_finished_ {false};
+      std::vector<game::player *>                               game_winners_;
 
       std::string                                               maze_scheme_;
       std::string                                               maze_version_;
 
       game::players_list                                        players_;
+      unsigned char                                             players_alive_ {0};
       std::unordered_map<std::string, schar_t>                  previous_players_;
 
       std::array<std::pair<schar_t, schar_t>, GAME_MAX_PLAYERS> players_start_coords_;
@@ -82,26 +83,41 @@ namespace game {
       std::vector<std::vector<game::block>>                     matrix_;
 
       std::queue<std::pair<protocol::E_info_type, std::string>> events_queue_;
-      protocol::update                                          next_update_;
+      std::vector<protocol::update>                             next_updates_;
+      std::vector<protocol::message>                            events_log_;
 
       // // // // // // // // // // //
       
     public:
       maze(schar_t row_num, schar_t col_num, const std::string &scheme) :
         basic_maze(row_num, col_num),
-        maze_scheme_{scheme}, gates_(), keys_(), matrix_(row_num, std::vector<game::block>(col_num))
+        maze_scheme_{scheme}, gates_(), keys_(), matrix_(row_num, std::vector<game::block>(col_num)), next_updates_(1)
       {{{
         return;
       }}}
+
 
       ~maze()
       {{{
         return;
       }}}
 
+
+      std::string get_scheme()
+      {{{
+        return maze_scheme_;
+      }}}
+
+
+      std::string get_version()
+      {{{
+        return maze_version_;
+      }}}
+
+
       bool is_move_possible(std::pair<signed char, signed char> coords, game::E_move move)
       {{{
-        game::block::E_block_type block;
+        game::block::E_block_type block_type;
 
         switch (move) {
           case game::E_move::LEFT :
@@ -121,15 +137,16 @@ namespace game {
             break;
 
           case game::E_move::STOP :
+          case game::E_move::NONE :
             return true;
 
           default :
             return false;
         }
 
-        block = matrix_[coords.first % dimensions_.first][coords.second % dimensions_.second].get();
+        block_type = matrix_[coords.first % dimensions_.first][coords.second % dimensions_.second].get();
 
-        return (block == game::block::WALL || block == game::block::GATE_CLOSED) ? false : true;
+        return (block_type == game::block::WALL || block_type == game::block::GATE_CLOSED) ? false : true;
       }}}
   };
 }

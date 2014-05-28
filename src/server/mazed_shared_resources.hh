@@ -20,8 +20,11 @@
 
 #include <memory>
 
+#include <boost/thread.hpp>
+
 #include "mazed_globals.hh"
 #include "mazed_mazes_manager.hh"
+#include "mazed_game_instance.hh"
 
 
 /* ****************************************************************************************************************** *
@@ -38,7 +41,9 @@ namespace mazed {
    */
   class shared_resources {
     public:
+      boost::mutex                                access_mutex;
       std::unique_ptr<mazed::mazes_manager>       p_mazes_manager;
+      std::list<std::shared_ptr<game::instance>>  game_instances;
       
       // // // // // // // // // // //
 

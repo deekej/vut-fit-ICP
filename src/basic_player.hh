@@ -68,12 +68,6 @@ namespace game {
 
       // // // // // // // // // // //
 
-      virtual std::string &get_nick()
-      {{{
-        return nick_;
-      }}}
-
-
       virtual void set_nick(const std::string &nick)
       {{{
         nick_ = nick;
@@ -81,10 +75,22 @@ namespace game {
       }}}
       
 
-      virtual void set_player_number(unsigned char number)
+      virtual std::string &get_nick()
+      {{{
+        return nick_;
+      }}}
+
+
+      virtual void set_number(unsigned char number)
       {{{
         player_num_ = number;
         return;
+      }}}
+
+
+      virtual unsigned char get_number()
+      {{{
+        return player_num_;
       }}}
 
 
