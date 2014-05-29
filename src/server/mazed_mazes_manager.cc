@@ -209,6 +209,7 @@ namespace mazed {
 
       p_maze->maze_version_ = version;
       p_maze->maze_scheme_ = input;
+      p_maze->maze_scheme_.back() = ' ';
 
       return p_maze;
     }
