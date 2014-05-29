@@ -147,6 +147,7 @@ namespace game {
 
         if (pu_thread_ && (*pu_thread_).joinable() == true) {
           (*pu_thread_).join();
+          pu_thread_.reset();
         }
 
         io_service_.reset();

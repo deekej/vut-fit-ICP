@@ -65,6 +65,18 @@ namespace mazed {
 
   client_handler::~client_handler()
   {{{
+    if (pu_player_) {
+      if (ps_instance_) {
+        ps_instance_->remove_player(pu_player_.get());
+      }
+
+      pu_player_.reset();
+    }
+
+    if (ps_instance_) {
+      ps_instance_->stop(player_UID_);
+    }
+
     log(mazed::log_level::INFO, "Client handler is STOPPING");
     log_file_.close();
 
