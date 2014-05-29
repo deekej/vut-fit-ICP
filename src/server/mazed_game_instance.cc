@@ -293,7 +293,7 @@ namespace game {
             p_maze_->next_updates_[0].players_coords.push_back((*it_players)->get_coords());
           }
           else {
-            continue;
+            p_maze_->next_updates_[0].players_coords.push_back(std::pair<signed char, signed char>(-1, -1));
           }
         }
 
