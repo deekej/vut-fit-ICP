@@ -26,7 +26,7 @@ LIBRARY_LINKAGE= -lboost_program_options -lboost_system -lboost_thread -lpthread
 
 all: client
 
-client: build/client_main.o build/client_mediator.o build/client_connections.o build/client_terminal_UI.o
+client: build/client_main.o build/client_mediator.o build/client_connections.o build/client_terminal_UI.o build/client_game_instance.o
 	$(LINKER) $(CXXFLAGS) $(LIBRARY_LINKAGE) -o $@ $^
 
 build/client_main.o: client_main.cc client_globals.hh client_mediator.hh
@@ -40,6 +40,9 @@ build/client_connections.o: client_connections.cc client_connections.hh abc_conn
 
 build/client_terminal_UI.o:	client_interface_terminal.cc client_interface_terminal.hh abc_user_interface.hh
 	$(CXX) $(CXXFLAGS) -o $@ -c client_interface_terminal.cc
+
+build/client_game_instance.o: client_game_instance.cc client_game_instance.hh client_globals.hh client_connections.hh ../protocol.hh ../serialization.hh
+	$(CXX) $(CXXFLAGS) -o $@ -c client_game_instance.cc
 
 ############################################################
 # Other useful stuff:

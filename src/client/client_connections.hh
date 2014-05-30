@@ -85,9 +85,11 @@ namespace client {
       std::vector<protocol::command>                commands_out_;
 
       protocol::update                              &update_in_;
-      boost::condition_variable                     &update_in_action_;
+      boost::condition_variable                     &update_in_received_;
       boost::mutex                                  &update_in_mutex_;
 
+      boost::condition_variable                     &error_occured_;
+      boost::mutex                                  &error_mutex_;
       protocol::message                             &error_message_;
       bool                                          &error_flag_;
 
@@ -95,6 +97,7 @@ namespace client {
 
       // // // // // // // // // // //
       
+      void communication_start();
       void authenticate();
       void authenticate_handler(const boost::system::error_code &error);
       void async_receive();
@@ -103,12 +106,15 @@ namespace client {
       void async_send_handler(const boost::system::error_code &error);
       
     public:
+      game_connection(const std::string &IP_address, const std::string &port, const std::string &auth_key,
+                      protocol::update &update_storage, boost::condition_variable &update_cond_var,
+                      boost::mutex &update_mutex, boost::condition_variable &error_cond_var, boost::mutex &error_mutex,
+                      protocol::message &error_msg_storage, bool &error_flag);
+     ~game_connection();
+
       bool connect() override;
       bool disconnect() override;
       void async_send(const protocol::command &cmd);
-      game_connection(const std::string IP_address, const std::string port, const std::string &auth_key,
-                      protocol::update &update_storage, boost::condition_variable &update_cond_var,
-                      boost::mutex &update_mutex, protocol::message &error_msg_storage, bool &error_flag);
   };
 
 }

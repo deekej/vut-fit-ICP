@@ -88,6 +88,8 @@ namespace game {
   void player::set_start_coords(std::pair<signed char, signed char> coords)
   {{{
     start_coords_ = coords;
+    coords_ = coords;
+    p_maze_->matrix_[coords.first][coords.second].add_player(this);
     return;
   }}}
 
@@ -325,7 +327,7 @@ namespace game {
   
   inline void player::update_coords(game::E_move move)
   {{{
-    if (move == STOP) {
+    if (move == STOP || move == NONE) {
       return;
     }
 
@@ -478,7 +480,6 @@ namespace game {
 
     last_move_result_ = NOT_POSSIBLE;
 
-    p_maze_->access_mutex_.lock();
     switch (command_act) {
       case LEFT :
         if (p_maze_->is_move_possible(coords_, LEFT) == true) {
@@ -564,14 +565,7 @@ namespace game {
         break;
     }
 
-    if (p_maze_->matrix_[coords_.first][coords_.second].get() == game::block::TARGET) {
-      p_maze_->access_mutex_.unlock();
-      return true;
-    }
-    else {
-      p_maze_->access_mutex_.unlock();
-      return false;
-    }
+    return (p_maze_->matrix_[coords_.first][coords_.second].get() == game::block::TARGET) ? true : false;
   }}}
 
 
@@ -594,6 +588,7 @@ namespace game {
           
           p_maze_->keys_.push_back(coords_);
         }
+
         has_key_ = false;
       }
 

@@ -52,6 +52,8 @@ namespace game {
    * Derived from basic_player class for server-side purposes.
    */
   class player : public basic_player {
+      boost::mutex                                  access_mutex_;
+
       asio::io_service                              io_service_;
       tcp::socket                                   socket_;
       tcp::acceptor                                 acceptor_;
@@ -67,7 +69,7 @@ namespace game {
 
       protocol::E_user_command                      command_buffer_;
       game::E_move                                  direction_;
-      game::E_move                                  next_move_;
+      game::E_move                                  next_move_ {NONE};
       protocol::E_move_result                       last_move_result_;
            
       std::string                                   UID_;
@@ -77,7 +79,6 @@ namespace game {
       bool                                          invulnerability_ {true};
       bool                                          game_over_ {false};
 
-      boost::mutex                                  access_mutex_;
 
       game::maze                                    *p_maze_ {NULL};
       mazed::client_handler                         *p_cl_handler_ {NULL};

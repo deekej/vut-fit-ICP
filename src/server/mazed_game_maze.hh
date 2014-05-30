@@ -89,9 +89,9 @@ namespace game {
       // // // // // // // // // // //
       
     public:
-      maze(schar_t row_num, schar_t col_num, const std::string &scheme) :
+      maze(schar_t row_num, schar_t col_num) :
         basic_maze(row_num, col_num),
-        maze_scheme_{scheme}, gates_(), keys_(), matrix_(row_num, std::vector<game::block>(col_num)), next_updates_(1)
+        gates_(), keys_(), matrix_(row_num, std::vector<game::block>(col_num)), next_updates_(1)
       {{{
         return;
       }}}
@@ -146,7 +146,8 @@ namespace game {
 
         block_type = matrix_[coords.first % dimensions_.first][coords.second % dimensions_.second].get();
 
-        return (block_type == game::block::WALL || block_type == game::block::GATE_CLOSED) ? false : true;
+        return (block_type == game::block::WALL || block_type == game::block::GATE_CLOSED ||
+                block_type == game::block::KEY) ? false : true;
       }}}
   };
 }

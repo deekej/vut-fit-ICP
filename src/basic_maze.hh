@@ -28,7 +28,6 @@
 namespace game {
   class basic_maze {
     protected:
-      std::string                                 name_;
       std::pair<signed char, signed char>         dimensions_;
 
     public:
@@ -45,6 +44,16 @@ namespace game {
       virtual ~basic_maze()
       {{{
         return;
+      }}}
+
+      virtual signed char get_rows()
+      {{{
+        return dimensions_.first;
+      }}}
+
+      virtual signed char get_cols()
+      {{{
+        return dimensions_.second;
       }}}
   };
 }

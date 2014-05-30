@@ -18,7 +18,13 @@
 #include <iostream>
 #include <limits>
 
+#include <boost/asio.hpp>
+#include <boost/filesystem.hpp>
+
+#include <signal.h>
+
 #include "client_interface_terminal.hh"
+#include "client_game_instance.hh"
 
 
 namespace client {
@@ -123,8 +129,9 @@ namespace client {
 
   terminal_interface::terminal_interface(boost::condition_variable &action_req, boost::mutex &action_req_mutex,
                                          boost::barrier &barrier, enum E_user_command &command_storage,
-                                         std::string &additional_data_storage) :
-    user_interface(action_req, action_req_mutex, barrier, command_storage, additional_data_storage), output_barrier_(2)
+                                         std::string &additional_data_storage, std::string process_name) :
+    user_interface(action_req, action_req_mutex, barrier, command_storage, additional_data_storage),
+    output_barrier_(2), timer_(io_service_), process_name_{process_name}
   {{{
     return;
   }}}
@@ -182,6 +189,8 @@ namespace client {
       run_ = false;
     }
     run_mutex_.unlock_upgrade();
+
+    maze_stop();
 
     // Notify the output thread (the input thread should be finished by now):
     output_req_.notify_one();
@@ -419,6 +428,19 @@ namespace client {
     return;
   }}}
 
+  
+  inline void terminal_interface::report_timer_error()
+  {{{
+    action_req_mutex_.lock();
+    {
+      command_ = E_user_command::ERROR_TIMER;
+      action_req_.notify_one();
+    }
+    action_req_mutex_.unlock();
+
+    return;
+  }}}
+
   // // // // // // // // // // // //
 
   /**
@@ -478,18 +500,144 @@ namespace client {
   /**
    * TODO: This is dummy function for now.
    */
-  void terminal_interface::start_maze()
+  bool terminal_interface::maze_run(client::game_instance *instance_ptr, const std::string zoom)
   {{{
-    return;
+    p_instance_ = instance_ptr;
+
+    std::stringstream command;
+    std::ifstream command_output_tmp;
+    std::string terminal_path;
+    std::string terminal_pid;
+
+    command << "gnome-terminal --hide-menubar --title=\"MAZE-GAME 2k14\" --zoom=" << zoom;
+    // command << "gnome-terminal --disable-factory --hide-menubar --title=\"MAZE-GAME 2k14\" --zoom=" << zoom;
+    command << " --geometry=" << p_instance_->get_cols() << "x" << p_instance_->get_rows();
+    command << " -x sh -c \"setterm -cursor off; tty > terminal.tmp; echo \"$$\" >> terminal.tmp;";
+    command << " while true; do sleep 30; done\" &";
+
+    if (std::system(command.str().c_str()) == -1) {
+      return false;
+    }
+
+        
+    boost::asio::io_service       io_service;
+    boost::asio::deadline_timer   timer(io_service);
+
+    while (boost::filesystem::exists("terminal.tmp") == false) {
+      timer.expires_from_now(boost::posix_time::milliseconds(100));
+      timer.wait();
+    }
+
+    command_output_tmp.open("terminal.tmp");
+
+    if (command_output_tmp.good() == false) {
+      display_message("ERROR: Failed to create temporary file for launching the MAZE-GAME window");
+      return false;
+    }
+
+    command_output_tmp >> terminal_path;
+    command_output_tmp >> terminal_pid;
+
+    command_output_tmp.close();
+    boost::filesystem::remove("terminal.tmp");
+
+    terminal_output_.open(terminal_path);
+
+    if (terminal_output_.good() == false) {
+      display_message("ERROR: Failed to open the MAZE GAME window");
+      return false;
+    }
+
+    if (std::system("wmctrl -r \"MAZE-GAME 2k14\" -b add,above") == -1) {
+      display_message("INFO: The MAZE-GAME window couldn't modified to stay always on top");
+      display_message("NOTE: You can try to make it stay always on top manually");
+    }
+
+    terminal_output_pid_ = static_cast<pid_t>(std::stol(terminal_pid) + 1);
+    
+    pu_maze_thread_ = std::unique_ptr<boost::thread>(new boost::thread(&terminal_interface::redraw_maze, this));
+
+    return true;
   }}}
 
   
   /**
    * TODO: This is dummy function for now.
    */
-  void terminal_interface::stop_maze()
+  void terminal_interface::maze_stop()
   {{{
+    timer_.cancel();
+    io_service_.stop();
+
+    if (pu_maze_thread_ && (*pu_maze_thread_).joinable() == true) {
+      (*pu_maze_thread_).join();
+      pu_maze_thread_.reset();
+    }
+    
+    if (terminal_output_.is_open() == true) {
+      terminal_output_.close();
+      kill(terminal_output_pid_, SIGTERM);
+    }
+
+    io_service_.reset();
     return;
+  }}}
+
+
+  void terminal_interface::maze_pause()
+  {{{
+    timer_.expires_from_now(boost::posix_time::pos_infin);
+    return;
+  }}}
+
+  
+  void terminal_interface::maze_continue()
+  {{{
+    timer_.expires_from_now(boost::posix_time::milliseconds(boost::posix_time::milliseconds(25)));
+    return;
+  }}}
+
+
+  void terminal_interface::redraw_maze()
+  {{{
+    terminal_output_ << p_instance_->get_output_string() << std::flush;
+
+    timer_.expires_at(boost::posix_time::pos_infin);
+    timer_.async_wait(boost::bind(&terminal_interface::redraw_maze_handler, this, boost::asio::placeholders::error));
+    io_service_.run();
+
+    return;
+  }}}
+
+
+  void terminal_interface::redraw_maze_handler(const boost::system::error_code &error)
+  {{{
+    run_mutex_.lock();
+    if (run_ == true) {
+      run_mutex_.unlock();
+
+      switch (error.value()) {
+        case boost::system::errc::operation_canceled :
+          timer_.async_wait(boost::bind(&terminal_interface::redraw_maze_handler, this,
+                            boost::asio::placeholders::error));
+          return;
+        
+        case boost::system::errc::success :
+          terminal_output_ << p_instance_->get_output_string();
+          timer_.expires_at(timer_.expires_at() + boost::posix_time::milliseconds(25));
+          timer_.async_wait(boost::bind(&terminal_interface::redraw_maze_handler, this,
+                            boost::asio::placeholders::error));
+          return;
+        
+        default :
+          report_timer_error();
+          return;
+      }
+    }
+    else {
+      run_mutex_.unlock();
+      return;
+    }
   }}}
 }
 

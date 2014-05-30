@@ -61,6 +61,7 @@ void process_params(int argc, char *argv[])
   long          max_ping;
   std::string   IPv4_address;
   std::string   config_file_loc;
+  std::string   zoom;
 
   try {
     namespace params = boost::program_options;
@@ -81,6 +82,9 @@ void process_params(int argc, char *argv[])
 
     help.add_options() ("timeout,t", params::value<long>(&max_ping)->default_value(20000),
                         "specify the max ping server (default: 20000)");
+
+    help.add_options() ("zoom,z", params::value<std::string>(&zoom)->default_value("1.5"),
+                        "specify the zoom level of the MAZE-GAME window (default: 1.5)");
 
     params::variables_map var_map;
     params::store(params::parse_command_line(argc, argv, help), var_map);
@@ -108,12 +112,19 @@ void process_params(int argc, char *argv[])
       std::cerr << "') for option '--timeout' is invalid" << std::endl;
       exit(client::exit_codes::E_WRONG_PARAMS);
     }
+
+    if (std::stod(var_map["zoom"].as<std::string>()) < 0.75) {
+      std::cerr << process_name << ": Error: the argument ('" << var_map["timeout"].as<long>();
+      std::cerr << "') for option '--zoom' is invalid" << std::endl;
+      exit(client::exit_codes::E_WRONG_PARAMS);
+    }
     
     std::get<client::PROCESS_NAME>(SETTINGS) = process_name;
     std::get<client::IPv4_ADDRESS>(SETTINGS) = IPv4_address;
     std::get<client::CONFIG_FILE_LOC>(SETTINGS) = config_file_loc;
     std::get<client::HELLO_INTERVAL>(SETTINGS) = hello_interval;
     std::get<client::MAX_PING>(SETTINGS) = max_ping;
+    std::get<client::ZOOM>(SETTINGS) = zoom;
 
     std::get<client::SERVER_PORT>(SETTINGS) = std::to_string(port);
     return;

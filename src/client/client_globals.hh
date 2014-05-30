@@ -36,6 +36,7 @@ namespace client {
     MAX_PING,
     NICK,
     PUID,
+    ZOOM,
   };
 
   enum E_event {
@@ -51,7 +52,8 @@ namespace client {
     long,               // HELLO_INTERVAL
     long,               // MAX_PING
     std::string,        // NICK
-    std::string         // PUID
+    std::string,        // PUID
+    std::string         // ZOOM
   >;
  
   enum exit_codes {
