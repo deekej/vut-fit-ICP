@@ -18,6 +18,7 @@
  ~ ~~~[ HEADER FILES ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
  * ****************************************************************************************************************** */
 
+#include <fstream>
 #include <map>
 #include <memory>
 #include <queue>
@@ -36,12 +37,15 @@
 
 namespace client {
 
+  class game_instance;
+
   /**
    * Class for creating and running the TERMINAL interface.
    */
   class terminal_interface : public ABC::user_interface {
       std::unique_ptr<boost::thread>                    pu_input_thread_;
       std::unique_ptr<boost::thread>                    pu_output_thread_;
+      std::unique_ptr<boost::thread>                    pu_maze_thread_;
       
       boost::upgrade_mutex                              run_mutex_;
       bool                                              run_ {true};
@@ -54,6 +58,14 @@ namespace client {
       bool                                              print_newline_ {true};
 
       std::string                                       user_input_;
+
+      boost::asio::io_service                           io_service_;
+      boost::asio::deadline_timer                       timer_;
+      std::ofstream                                     terminal_output_;
+      pid_t                                             terminal_output_pid_;
+      client::game_instance                             *p_instance_ {NULL};
+
+      std::string                                       process_name_;
       
       static const std::string                          welcome_message_;
       static const std::string                          exit_message_;
@@ -76,21 +88,28 @@ namespace client {
       std::string get_word();
 
       inline void report_istream_error();
+      inline void report_timer_error();
+      void redraw_maze();
+      void redraw_maze_handler(const boost::system::error_code &error);
 
       // // // // // // // // // // //
 
     public:
       terminal_interface(boost::condition_variable &action_req, boost::mutex &action_req_mutex, boost::barrier &barrier,
-                         enum E_user_command &command_storage, std::string &additional_data_storage);
+                         enum E_user_command &command_storage, std::string &additional_data_storage,
+                         std::string process_name);
      ~terminal_interface();
 
       void initialize() override;
       void terminate() override;
 
       void display_message(const std::string &message) override;
+      
+      bool maze_run(client::game_instance *instance_ptr, const std::string zoom) override;
+      void maze_stop() override;
 
-      void start_maze() override;
-      void stop_maze() override;
+      void maze_pause() override;
+      void maze_continue() override;
   };
 }
 

@@ -45,8 +45,8 @@ namespace protocol {
    */
   struct update {
     enum E_move_result                                last_move;
-    std::vector<std::pair<signed char, signed char>>  keys_coords;
     std::vector<std::pair<signed char, signed char>>  opened_gates_coords;
+    std::vector<std::pair<signed char, signed char>>  keys_coords;
     std::vector<std::pair<signed char, signed char>>  players_coords;
     std::vector<std::pair<signed char, signed char>>  guardians_coords;
 
@@ -215,6 +215,7 @@ namespace protocol {
     UPDATE,
     SET,
     LOCAL,
+    GAME_LOCAL,
   };
 
   /**

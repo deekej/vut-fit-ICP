@@ -673,19 +673,44 @@ namespace client {
  * ****************************************************************************************************************** */
 
 namespace client {
-  game_connection::game_connection(const std::string IP_address, const std::string port, const std::string &auth_key,
+  game_connection::game_connection(const std::string &IP_address, const std::string &port, const std::string &auth_key,
                                    protocol::update &update_storage, boost::condition_variable &update_cond_var,
-                                   boost::mutex &update_mutex, protocol::message &error_msg_storage,
-                                   bool &error_flag) :
+                                   boost::mutex &update_mutex, boost::condition_variable &error_cond_var,
+                                   boost::mutex &error_mutex, protocol::message &error_msg_storage, bool &error_flag) :
     connection(IP_address, port),
-    update_in_{update_storage}, update_in_action_{update_cond_var}, update_in_mutex_{update_mutex},
-    error_message_{error_msg_storage}, error_flag_{error_flag}, auth_key_{auth_key}
+    update_in_{update_storage}, update_in_received_{update_cond_var}, update_in_mutex_{update_mutex},
+    error_occured_{error_cond_var}, error_mutex_{error_mutex}, error_message_{error_msg_storage},
+    error_flag_{error_flag},
+    auth_key_{auth_key}
   {{{
     commands_out_.resize(1);
     return;
   }}}
 
-  
+
+  game_connection::~game_connection()
+  {{{
+    if (socket_.is_open() == true) {
+      // Closing the connection:
+      boost::system::error_code ignored_error;
+
+      socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignored_error);
+      socket_.cancel();
+      socket_.close();
+    }
+   
+    io_service_.stop();                   // Making sure no more computation is done by thread.
+
+    // Join thread if it wasn't joined already:
+    if (pu_asio_thread_ && (*pu_asio_thread_).joinable() == true) {
+      (*pu_asio_thread_).join();
+      pu_asio_thread_.reset();            // Make sure we don't call .join() multiple times.
+    }
+
+    return;
+  }}}
+
+
   bool game_connection::connect()
   {{{
     assert(socket_.is_open() == false);
@@ -697,7 +722,7 @@ namespace client {
     if (error) {
       error_message_.type = protocol::E_type::ERROR;
       error_message_.error_type = protocol::E_error_type::CONNECTION_FAILED;
-      error_message_.status = protocol::E_status::LOCAL;
+      error_message_.status = protocol::E_status::GAME_LOCAL;
       error_message_.data.push_back(error.message());
 
       return false;
@@ -718,50 +743,66 @@ namespace client {
 
       error_message_.type = protocol::E_type::ERROR;
       error_message_.error_type = protocol::E_error_type::CONNECTION_FAILED;
-      error_message_.status = protocol::E_status::LOCAL;
+      error_message_.status = protocol::E_status::GAME_LOCAL;
       error_message_.data.push_back(error.message());
 
       return false;
     }
     
     // Successful connection, starting & detaching a new thread for ASYNC operations:
-    pu_asio_thread_ = std::unique_ptr<boost::thread>(new boost::thread(&game_connection::authenticate, this));
+    pu_asio_thread_ = std::unique_ptr<boost::thread>(new boost::thread(&game_connection::communication_start, this));
     
     return true;
-
   }}}
 
 
   bool game_connection::disconnect()
   {{{
-    assert(socket_.is_open() == true);
+    if (socket_.is_open() == true) {
+      // Closing the connection:
+      boost::system::error_code ignored_error;
 
-    // Closing the connection:
-    boost::system::error_code ignored_error;
-    socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignored_error);
-    socket_.cancel();
-    socket_.close();
+      socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignored_error);
+      socket_.cancel();
+      socket_.close();
+    }
    
     io_service_.stop();                   // Making sure no more computation is done by thread.
 
+#if 0
     // We currently have a lock as a caller. We need to unlock to make sure the other thread doesn't get stuck waiting
     // for the lock, which it uses:
     update_in_mutex_.unlock();
     {
+#endif
       // Join thread if it wasn't joined already:
       if (pu_asio_thread_ && (*pu_asio_thread_).joinable() == true) {
         (*pu_asio_thread_).join();
-        pu_asio_thread_ = NULL;           // Make sure we don't call .join() multiple times.
+        pu_asio_thread_.reset();          // Make sure we don't call .join() multiple times.
       }
+#if 0
     }
     update_in_mutex_.lock();              // Acquire the lock back.
+#endif
+
+    io_service_.reset();
 
     return true;
   }}}
 
+  
+  void game_connection::communication_start()
+  {{{
+    authenticate();
+    io_service_.run();
+    return;
+  }}}
+
+
   void game_connection::authenticate()
   {{{
-    std::vector<protocol::message> message_vect(1);
+    std::vector<protocol::message> message_vect;
+    message_vect.resize(1);
 
     message_vect[0].type = protocol::E_type::CTRL;
     message_vect[0].ctrl_type = protocol::E_ctrl_type::SYN;
@@ -773,40 +814,45 @@ namespace client {
     return;
   }}}
 
+
   void game_connection::authenticate_handler(const boost::system::error_code &error)
   {{{
     if (error) {
-      error_message_.type = protocol::E_type::ERROR;
-      error_message_.status = protocol::E_status::LOCAL;
+      error_mutex_.lock();
+      {
+        error_message_.type = protocol::E_type::ERROR;
+        error_message_.status = protocol::E_status::GAME_LOCAL;
 
-      switch (error.value()) {
-        case boost::asio::error::eof :
-          error_message_.error_type = protocol::E_error_type::CONNECTION_CLOSED;
-          error_message_.data.push_back("Game authentication failed");
-          break;
+        switch (error.value()) {
+          case boost::asio::error::eof :
+            error_message_.error_type = protocol::E_error_type::CONNECTION_CLOSED;
+            error_message_.data.push_back("Game authentication failed");
+            break;
 
-        case boost::asio::error::operation_aborted :
-          error_message_.error_type = protocol::E_error_type::TIMEOUT;
-          error_message_.data.push_back("Game connection to server has timed out");
-          error_message_.data.push_back("The connection has been closed");
-          break;
+          case boost::asio::error::operation_aborted :
+            error_message_.error_type = protocol::E_error_type::TIMEOUT;
+            error_message_.data.push_back("Game connection to server has timed out");
+            error_message_.data.push_back("The connection has been closed");
+            break;
 
-        default :
-          error_message_.error_type = protocol::E_error_type::UNKNOWN_ERROR;
-          error_message_.data.push_back("While authenticating to game: ");
-          error_message_.data.back().append(error.message());
-          error_message_.data.push_back("The connection has been closed");
-          break;
+          default :
+            error_message_.error_type = protocol::E_error_type::UNKNOWN_ERROR;
+            error_message_.data.push_back("While authenticating to game: ");
+            error_message_.data.back().append(error.message());
+            error_message_.data.push_back("The connection has been closed");
+            break;
+        }
+
+        error_flag_ = true;
+        error_occured_.notify_one();
       }
-
-      error_flag_ = true;
-      update_in_action_.notify_one();
-      return;
+      error_mutex_.unlock();
     }
 
     async_receive();
     return;
   }}}
+
 
   void game_connection::async_send(const protocol::command &cmd)
   {{{
@@ -820,31 +866,35 @@ namespace client {
   void game_connection::async_send_handler(const boost::system::error_code &error)
   {{{
     if (error) {
-      error_message_.type = protocol::E_type::ERROR;
-      error_message_.status = protocol::E_status::LOCAL;
+      error_mutex_.lock();
+      {
+        error_message_.type = protocol::E_type::ERROR;
+        error_message_.status = protocol::E_status::GAME_LOCAL;
 
-      switch (error.value()) {
-        case boost::asio::error::eof :
-          error_message_.error_type = protocol::E_error_type::CONNECTION_CLOSED;
-          error_message_.data.push_back("Connection closed by server");
-          break;
+        switch (error.value()) {
+          case boost::asio::error::eof :
+            error_message_.error_type = protocol::E_error_type::CONNECTION_CLOSED;
+            error_message_.data.push_back("Connection closed by server");
+            break;
 
-        case boost::asio::error::operation_aborted :
-          error_message_.error_type = protocol::E_error_type::TIMEOUT;
-          error_message_.data.push_back("Connection to server has timed out");
-          error_message_.data.push_back("The connection has been closed");
-          break;
+          case boost::asio::error::operation_aborted :
+            error_message_.error_type = protocol::E_error_type::TIMEOUT;
+            error_message_.data.push_back("Connection to server has timed out");
+            error_message_.data.push_back("The connection has been closed");
+            break;
 
-        default :
-          error_message_.error_type = protocol::E_error_type::UNKNOWN_ERROR;
-          error_message_.data.push_back("While sending command: ");
-          error_message_.data.back().append(error.message());
-          error_message_.data.push_back("The connection has been closed");
-          break;
+          default :
+            error_message_.error_type = protocol::E_error_type::UNKNOWN_ERROR;
+            error_message_.data.push_back("While sending command: ");
+            error_message_.data.back().append(error.message());
+            error_message_.data.push_back("The connection has been closed");
+            break;
+        }
+
+        error_flag_ = true;
+        error_occured_.notify_one();
       }
-
-      error_flag_ = true;
-      update_in_action_.notify_one();
+      error_mutex_.unlock();
     }
 
     return;
@@ -862,53 +912,59 @@ namespace client {
   void game_connection::async_receive_handler(const boost::system::error_code &error)
   {{{
     if (error) {
-      error_message_.type = protocol::E_type::ERROR;
-      error_message_.status = protocol::E_status::LOCAL;
+      error_mutex_.lock();
+      {
+        error_message_.type = protocol::E_type::ERROR;
+        error_message_.status = protocol::E_status::LOCAL;
 
-      switch (error.value()) {
-        case boost::asio::error::eof :
-          error_message_.error_type = protocol::E_error_type::CONNECTION_CLOSED;
-          error_message_.data.push_back("Connection closed by server");
-          break;
+        switch (error.value()) {
+          case boost::asio::error::eof :
+            error_message_.error_type = protocol::E_error_type::CONNECTION_CLOSED;
+            error_message_.data.push_back("Connection closed by server");
+            break;
 
-        case boost::asio::error::operation_aborted :
-          error_message_.error_type = protocol::E_error_type::TIMEOUT;
-          error_message_.data.push_back("Connection to server has timed out");
-          error_message_.data.push_back("The connection has been closed");
-          break;
+          case boost::asio::error::operation_aborted :
+            error_message_.error_type = protocol::E_error_type::TIMEOUT;
+            error_message_.data.push_back("Connection to server has timed out");
+            error_message_.data.push_back("The connection has been closed");
+            break;
 
-        default :
-          error_message_.error_type = protocol::E_error_type::UNKNOWN_ERROR;
-          error_message_.data.push_back("While receiving update: ");
-          error_message_.data.back().append(error.message());
-          error_message_.data.push_back("The connection has been closed");
-          break;
+          default :
+            error_message_.error_type = protocol::E_error_type::UNKNOWN_ERROR;
+            error_message_.data.push_back("While receiving update: ");
+            error_message_.data.back().append(error.message());
+            error_message_.data.push_back("The connection has been closed");
+            break;
+        }
+        
+        error_flag_ = true;
+        error_occured_.notify_one();
       }
-      
-      error_flag_ = true;
-      update_in_action_.notify_one();
-      
+      error_mutex_.unlock();
       return;
     }
     // Testing the message received - the protocol expects only one actual message from server:
     else if (updates_in_.size() != 1) {
-      error_message_.type = protocol::E_type::ERROR;
-      error_message_.status = protocol::E_status::LOCAL;
+      error_mutex_.lock();
+      {
+        error_message_.type = protocol::E_type::ERROR;
+        error_message_.status = protocol::E_status::LOCAL;
 
-      if (updates_in_.size() == 0) {
-        error_message_.error_type = protocol::E_error_type::EMPTY_MESSAGE;
-        error_message_.data.push_back("Message with empty content received");
-        error_message_.data.push_back("The connection has been closed");
-      }
-      else {
-        error_message_.error_type = protocol::E_error_type::MULTIPLE_MESSAGES;
-        error_message_.data.push_back("Wrong protocol - multiple messages received");
-        error_message_.data.push_back("The connection has been closed");
-      }
+        if (updates_in_.size() == 0) {
+          error_message_.error_type = protocol::E_error_type::EMPTY_MESSAGE;
+          error_message_.data.push_back("Message with empty content received");
+          error_message_.data.push_back("The connection has been closed");
+        }
+        else {
+          error_message_.error_type = protocol::E_error_type::MULTIPLE_MESSAGES;
+          error_message_.data.push_back("Wrong protocol - multiple messages received");
+          error_message_.data.push_back("The connection has been closed");
+        }
 
-      error_flag_ = true;
-      update_in_action_.notify_one();
-
+        error_flag_ = true;
+        error_occured_.notify_one();
+      };
+      error_mutex_.unlock();
       return;
     }
     else {
@@ -916,7 +972,7 @@ namespace client {
       update_in_mutex_.lock();
       {
         update_in_ = updates_in_[0];
-        update_in_action_.notify_one();
+        update_in_received_.notify_one();
       }
       update_in_mutex_.unlock();
     

@@ -37,7 +37,7 @@ namespace client {
     
     // Preparing the interface:
     p_interface_ = new client::terminal_interface(action_req_, action_req_mutex_, interface_barrier_, user_command_,
-                                                  additional_data_);
+                                                  additional_data_, std::get<PROCESS_NAME>(settings));
     return;
   }}}
 
@@ -51,6 +51,11 @@ namespace client {
 
     delete p_tcp_connect_;
     delete p_interface_;
+
+    if (p_game_instance_ != NULL) {
+      p_game_instance_->stop();
+      delete p_game_instance_;
+    }
 
     return;
   }}}
@@ -229,7 +234,14 @@ namespace client {
       case SERVER_ERROR :
       case SERVER_ERROR_INFO :
       case UNKNOWN_ERROR :
-        p_tcp_connect_->disconnect();
+        if (message_in_.status != GAME_LOCAL) {
+          p_tcp_connect_->disconnect();
+        }
+        else {
+          p_game_instance_->stop();
+          delete p_game_instance_;
+          p_game_instance_ = NULL;
+        }
         display_message_error();
         display_message("NOTE:  You can try to reconnect to server by writing 'reconnect' or\n"
                         "\t    write 'quit' or 'exit' to end the program.");
@@ -309,56 +321,66 @@ namespace client {
 
   void mediator::CMD_LEFT_handler()
   {{{
-    p_interface_->display_message("Command not implemented yet, sorry.");
-
+    game_command_.cmd = protocol::E_user_command::LEFT;
+    p_game_instance_->send_command(game_command_);
     return;
   }}}
 
 
   void mediator::CMD_RIGHT_handler()
   {{{
-    p_interface_->display_message("Command not implemented yet, sorry.");
-
+    game_command_.cmd = protocol::E_user_command::RIGHT;
+    p_game_instance_->send_command(game_command_);
     return;
   }}}
 
 
   void mediator::CMD_UP_handler()
   {{{
-    p_interface_->display_message("Command not implemented yet, sorry.");
-
+    game_command_.cmd = protocol::E_user_command::UP;
+    p_game_instance_->send_command(game_command_);
     return;
   }}}
 
 
   void mediator::CMD_DOWN_handler()
   {{{
-    p_interface_->display_message("Command not implemented yet, sorry.");
-
+    game_command_.cmd = protocol::E_user_command::DOWN;
+    p_game_instance_->send_command(game_command_);
     return;
   }}}
 
 
   void mediator::CMD_STOP_handler()
   {{{
-    p_interface_->display_message("Command not implemented yet, sorry.");
-
+    game_command_.cmd = protocol::E_user_command::STOP;
+    p_game_instance_->send_command(game_command_);
     return;
   }}}
 
 
   void mediator::CMD_TAKE_OPEN_handler()
   {{{
-    p_interface_->display_message("Command not implemented yet, sorry.");
-
+    game_command_.cmd = protocol::E_user_command::TAKE_OPEN;
+    p_game_instance_->send_command(game_command_);
     return;
   }}}
 
 
   void mediator::CMD_PAUSE_CONTINUE_handler()
   {{{
-    p_interface_->display_message("Command not implemented yet, sorry.");
+    if (p_game_instance_->paused == true) {
+      game_command_.cmd = protocol::E_user_command::START_CONTINUE;
+      p_game_instance_->paused = false;
+      p_interface_->maze_continue();
+    }
+    else {
+      game_command_.cmd = protocol::E_user_command::PAUSE;
+      p_game_instance_->paused = true;
+      p_interface_->maze_pause();
+    }
 
+    p_game_instance_->send_command(game_command_);
     return;
   }}}
 
@@ -448,7 +470,9 @@ namespace client {
 
   void mediator::CMD_GAME_LEAVE_handler()
   {{{
-    p_interface_->display_message("Command not implemented yet, sorry.");
+    p_interface_->maze_stop();
+    p_game_instance_->stop();
+    // p_interface_->display_message("Command not implemented yet, sorry.");
 
     return;
   }}}
@@ -622,7 +646,7 @@ namespace client {
     p_interface_->display_message("×--------------------------×");
     
     if (available_saves_.size() == 0) {
-      p_interface_->display_message(" · No available saves found...");
+      p_interface_->display_message(" - No available saves found...");
       return;
     }
 
@@ -642,6 +666,8 @@ namespace client {
 
   void mediator::CTRL_MSG_CREATE_GAME_handler()
   {{{
+    assert(p_game_instance_ == NULL);
+
     if (message_in_.status != ACK) {
       display_error("Server refused the request of game creation");
       return;
@@ -649,6 +675,27 @@ namespace client {
 
     GI_port_ = message_in_.data[0];
     GI_auth_key_ = message_in_.data[1];
+    GI_maze_scheme_ = message_in_.data[2];
+    GI_maze_rows_ = message_in_.data[3];
+    GI_maze_cols_ = message_in_.data[4];
+
+    p_game_instance_ = new game_instance(std::get<IPv4_ADDRESS>(settings_), message_in_.data[0], message_in_.data[1],
+                                         message_in_.data[2], message_in_.data[3], message_in_.data[4],
+                                         action_req_, action_req_mutex_, message_in_, new_message_flag_);
+
+    if (p_game_instance_->run() == false) {
+      display_error("Connection to server's game instance failed");
+
+      delete p_game_instance_;
+      p_game_instance_ = NULL;
+      return;
+    }
+
+    if (p_interface_->maze_run(p_game_instance_, std::get<ZOOM>(settings_)) == false) {
+      delete p_game_instance_;
+      p_game_instance_ = NULL;
+      return;
+    }
 
     return;
   }}}

@@ -45,6 +45,7 @@ namespace client {
 
       client::tcp_connection                      *p_tcp_connect_ {NULL};
       ABC::user_interface                         *p_interface_ {NULL};
+      client::game_instance                       *p_game_instance_ {NULL};
 
       protocol::message                           message_in_;
       protocol::message                           message_out_;
@@ -58,8 +59,7 @@ namespace client {
       command_t                                   user_command_ {command_t::NONE};
       std::string                                 additional_data_;
 
-      client::settings_tuple                      &settings_;
-      client::exit_codes                          retval_ {exit_codes::NO_ERROR};
+      protocol::command                           game_command_;
 
       bool                                        new_message_flag_ {false};
       bool                                        run_ {true};
@@ -69,9 +69,16 @@ namespace client {
 
       std::string                                 GI_port_;
       std::string                                 GI_auth_key_;
+      std::string                                 GI_maze_scheme_;
+      std::string                                 GI_maze_rows_;
+      std::string                                 GI_maze_cols_;
+
       protocol::update                            update_;
       boost::condition_variable                   update_cond_;
       boost::mutex                                update_mutex_;
+
+      client::settings_tuple                      &settings_;
+      client::exit_codes                          retval_ {exit_codes::NO_ERROR};
 
       // // // // // // // // // // //
 

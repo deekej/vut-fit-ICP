@@ -150,7 +150,6 @@ namespace game {
           pu_thread_.reset();
         }
 
-        io_service_.reset();
         retval = true;
       }
     }

@@ -65,6 +65,7 @@ namespace mazed {
 
   client_handler::~client_handler()
   {{{
+    #if 0
     if (pu_player_) {
       if (ps_instance_) {
         ps_instance_->remove_player(pu_player_.get());
@@ -76,6 +77,7 @@ namespace mazed {
     if (ps_instance_) {
       ps_instance_->stop(player_UID_);
     }
+    #endif
 
     log(mazed::log_level::INFO, "Client handler is STOPPING");
     log_file_.close();
@@ -668,7 +670,8 @@ namespace mazed {
     player_in_game_ = true;
 
     message_prepare(CTRL, CREATE_GAME, ACK,
-                    data_t {std::to_string(pu_player_->port()), player_auth_key_, p_maze->get_scheme()});
+                    data_t {std::to_string(pu_player_->port()), player_auth_key_, p_maze->get_scheme(),
+                            std::to_string(p_maze->get_rows()), std::to_string(p_maze->get_cols())});
     return;
   }}}
 

@@ -22,6 +22,8 @@
 
 #include <boost/thread.hpp>
 
+#include "client_game_instance.hh"
+
 
 /* ****************************************************************************************************************** *
  ~ ~~~[ USER_INTERFACE CLASS ]~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ~
@@ -64,9 +66,10 @@ namespace ABC {
         HELP,
         EXIT,
         ERROR_INPUT_STREAM,
+        ERROR_TIMER,
       };
 
-    static const std::size_t                    USER_COMMANDS_SIZE {29};
+    static const std::size_t                    USER_COMMANDS_SIZE {30};
 
     protected:
       boost::condition_variable                 &action_req_;
@@ -81,9 +84,13 @@ namespace ABC {
     public:
       virtual void initialize() = 0;
       virtual void display_message(const std::string &message) = 0;
-      virtual void start_maze() = 0;
-      virtual void stop_maze() = 0;
       virtual void terminate() = 0;
+
+      virtual bool maze_run(client::game_instance *instance_ptr, const std::string zoom) = 0;
+      virtual void maze_stop() = 0;
+
+      virtual void maze_pause() = 0;
+      virtual void maze_continue() = 0;
 
       // // // // // // // // // // //
 

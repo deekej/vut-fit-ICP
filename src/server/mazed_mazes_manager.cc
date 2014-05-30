@@ -139,7 +139,7 @@ namespace mazed {
 
 
       input = maze_scheme.str();
-      p_maze = new game::maze(static_cast<signed char>(rows), static_cast<signed char>(cols), input);
+      p_maze = new game::maze(static_cast<signed char>(rows), static_cast<signed char>(cols));
       
       std::size_t linear_pos {0};
 
@@ -165,6 +165,7 @@ namespace mazed {
             case '*' :
               p_maze->matrix_[i][j].set(game::block::KEY);
               p_maze->keys_.emplace_back(std::pair<signed char, signed char>(i, j));
+              input[linear_pos] = ' ';
               break;
 
             case 'G' :
