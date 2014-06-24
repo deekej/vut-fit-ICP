@@ -73,11 +73,15 @@ namespace game {
                mazed::client_handler *cl_handler_ptr);
      ~instance();
 
+     std::string get_scheme();
+     std::string get_rows();
+     std::string get_cols();
+
 #if 0
       protocol::E_game_status get_status();
 #endif
       
-      bool check_player(game::player *player_ptr);
+//       bool check_player(game::player *player_ptr);
       bool add_player(game::player *player_ptr);
       void remove_player(game::player *player_ptr);
 

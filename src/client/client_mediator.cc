@@ -462,7 +462,8 @@ namespace client {
 
   void mediator::CMD_GAME_JOIN_handler()
   {{{
-    p_interface_->display_message("Command not implemented yet, sorry.");
+    message_prepare(CTRL, JOIN_GAME, SET);
+    message_send();
 
     return;
   }}}
@@ -715,6 +716,39 @@ namespace client {
 
   void mediator::CTRL_MSG_JOIN_GAME_handler()
   {{{
+    assert(p_game_instance_ == NULL);
+
+    if (message_in_.status != ACK) {
+      display_error("Server refused the request of joining the game");
+      return;
+    }
+
+    GI_port_ = message_in_.data[0];
+    GI_auth_key_ = message_in_.data[1];
+    GI_maze_scheme_ = message_in_.data[2];
+    GI_maze_rows_ = message_in_.data[3];
+    GI_maze_cols_ = message_in_.data[4];
+
+    p_game_instance_ = new game_instance(std::get<IPv4_ADDRESS>(settings_), message_in_.data[0], message_in_.data[1],
+                                         message_in_.data[2], message_in_.data[3], message_in_.data[4],
+                                         action_req_, action_req_mutex_, message_in_, new_message_flag_);
+
+    if (p_game_instance_->run() == false) {
+      display_error("Connection to server's game instance failed");
+
+      delete p_game_instance_;
+      p_game_instance_ = NULL;
+      return;
+    }
+
+    if (p_interface_->maze_run(p_game_instance_, std::get<ZOOM>(settings_)) == false) {
+      delete p_game_instance_;
+      p_game_instance_ = NULL;
+      return;
+    }
+
+    p_interface_->maze_continue();
+
     return;
   }}}
 

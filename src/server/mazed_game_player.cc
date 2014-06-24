@@ -530,7 +530,7 @@ namespace game {
           last_move_result_ = POSSIBLE;
         }
         
-        direction_ = UP;
+        direction_ = DOWN;
         break;
 
       case STOP :

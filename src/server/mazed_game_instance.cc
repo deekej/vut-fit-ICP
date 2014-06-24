@@ -84,6 +84,21 @@ namespace game {
 
   // // // // // // // // // // //
 
+  std::string instance::get_scheme()
+  {{{
+    return p_maze_->maze_scheme_;
+  }}}
+
+  std::string instance::get_rows()
+  {{{
+    return std::to_string(p_maze_->get_rows());
+  }}}
+
+  std::string instance::get_cols()
+  {{{
+    return std::to_string(p_maze_->get_cols());
+  }}}
+
   std::shared_ptr<game::instance> instance::run()
   {{{
     assert(pu_thread_.get() == nullptr);
@@ -297,10 +312,11 @@ namespace game {
           }
         }
 
-
+        std::vector<protocol::update> updates;
         for (it_players = p_maze_->players_.begin(); it_players != p_maze_->players_.end(); it_players++) {
           if (*it_players != NULL) {
-            (*it_players)->update_client(p_maze_->next_updates_);
+            updates = p_maze_->next_updates_;
+            (*it_players)->update_client(updates);
           }
           else {
             continue;
@@ -318,11 +334,12 @@ namespace game {
 
   // // // // // // // // // // //
 
+#if 0
   bool instance::check_player(game::player *player_ptr)
   {{{
     return false;
   }}}
-
+#endif
   
   bool instance::add_player(game::player *player_ptr)
   {{{
