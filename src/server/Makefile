@@ -10,7 +10,7 @@
 ############################################################
 
 # Compiler.
-CXX=colorgcc
+CXX=g++-4.8
 LINKER=g++
 
 #BOOST_PATH=../boost
@@ -56,7 +56,7 @@ build/mazed_game_instance.o: mazed_game_instance.cc mazed_game_instance.hh mazed
 .PHONY: run show kill clean clean-all
 
 run: all kill
-	@./mazed --logging 1
+	@./mazed --logging 1 -t 6000000
 	@./.show.sh "./mazed"
 
 show:

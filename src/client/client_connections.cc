@@ -848,7 +848,6 @@ namespace client {
       }
       error_mutex_.unlock();
     }
-
     async_receive();
     return;
   }}}

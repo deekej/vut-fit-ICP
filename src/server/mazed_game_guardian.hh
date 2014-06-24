@@ -36,11 +36,14 @@ namespace game {
   class guardian : public basic_guardian {
       std::pair<signed char, signed char>         start_coords_;
       game::maze                                  *p_maze_;
+      game::E_move                                direction_;
+      bool                                        prev_move_success_;
     public:
       guardian()
       {{{
         return;
       }}}
+
 
       guardian(signed char row, signed char column, game::maze *ptr) :
         basic_guardian(row, column),
@@ -49,16 +52,19 @@ namespace game {
         return;
       }}}
 
+
       ~guardian()
       {{{
         return;
       }}}
+
 
       void set_coords(signed char row, signed char column)
       {{{
         coords_.first = row;
         coords_.second = column;
       }}}
+
 
       std::pair<signed char, signed char> get_coords()
       {{{

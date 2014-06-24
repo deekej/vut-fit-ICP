@@ -690,6 +690,20 @@ namespace mazed {
 
   void client_handler::JOIN_GAME_handler()
   {{{
+    pu_player_ = std::unique_ptr<game::player>(new game::player(player_UID_, player_auth_key_, player_nick_, this));
+
+    ps_shared_res_->access_mutex.lock();
+    {
+      ps_instance_ = ps_shared_res_->game_instances.front();
+    }
+    ps_shared_res_->access_mutex.unlock();
+
+    ps_instance_->add_player(pu_player_.get());
+    pu_player_->run();
+
+    message_prepare(CTRL, JOIN_GAME, ACK,
+                    data_t {std::to_string(pu_player_->port()), player_auth_key_, ps_instance_->get_scheme(),
+                            ps_instance_->get_rows(), ps_instance_->get_cols()});
     return;
   }}}
 

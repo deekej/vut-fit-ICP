@@ -10,7 +10,7 @@
 ############################################################
 
 # Compiler.
-CXX=colorgcc
+CXX=g++-4.8
 LINKER=g++
 
 # Parameters of compilation.
