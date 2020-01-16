@@ -69,7 +69,7 @@ namespace mazed {
     chdir(std::get<mazed::LOG_FOLDER>(settings_).c_str());
     log_file_.open(std::get<mazed::SERVER_LOG_FILE>(settings_), std::ofstream::out | std::ofstream::app);
 
-    if (std::get<mazed::LOGGING_LEVEL>(settings_) != mazed::log_level::NONE) {
+    if (std::get<<mazed::LOGGING_LEVEL>(settings_) != mazed::log_level::NONE) {
       log_file_ << "----------------------------" << std::endl;
     }
 
