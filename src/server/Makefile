@@ -14,7 +14,7 @@ CXX=g++
 LINKER=g++
 
 #BOOST_PATH=../boost
-LIBRARY_LINKAGE= -lboost_program_options -lboost_system -lboost_thread -lpthread -lboost_filesystem -lboost_serialization#-I $(BOOST_PATH)
+LIBRARY_LINKAGE= -lboost_program_options -lboost_system -lboost_thread -lpthread -lboost_filesystem -lboost_serialization -lstdc++ #-I $(BOOST_PATH)
 
 # Parameters of compilation.
 CXXFLAGS=-std=c++11 -pedantic -W -Wall -Wextra -g
